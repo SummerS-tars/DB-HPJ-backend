@@ -1,0 +1,1448 @@
+openapi: 3.0.3
+info:
+  title: LLM Evaluation Dataset Management System API
+  description: API for managing LLM evaluation datasets including raw Q&A, standard questions, candidate answers, and evaluation results
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.example.com/api/v1
+    description: Production server
+
+paths:
+  # ==================== Raw Questions ====================
+  /raw-questions/import:
+    post:
+      tags:
+        - Raw Questions
+      summary: Import raw questions from file
+      description: Batch import raw questions from XML/CSV file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: XML/CSV file containing raw questions
+      parameters:
+        - name: sourcePlatform
+          in: query
+          schema:
+            type: string
+            default: stackoverflow
+          description: Source platform for the data
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /raw-questions:
+    get:
+      tags:
+        - Raw Questions
+      summary: Get raw questions with pagination
+      description: Query raw questions list with pagination, sorting, and filtering
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortDirectionParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/QuestionStatus'
+        - name: sourcePlatform
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedRawQuestions'
+
+  /raw-questions/{id}:
+    get:
+      tags:
+        - Raw Questions
+      summary: Get raw question by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawQuestionDTO'
+        '404':
+          description: Raw question not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /raw-questions/{id}/status:
+    patch:
+      tags:
+        - Raw Questions
+      summary: Update raw question status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/QuestionStatus'
+              required:
+                - status
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawQuestionDTO'
+
+  /raw-questions/{id}/answers:
+    get:
+      tags:
+        - Raw Answers
+      summary: Get answers for a raw question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedRawAnswers'
+
+  # ==================== Raw Answers ====================
+  /raw-answers/import:
+    post:
+      tags:
+        - Raw Answers
+      summary: Import raw answers from file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      parameters:
+        - name: sourcePlatform
+          in: query
+          schema:
+            type: string
+            default: stackoverflow
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+  /raw-answers:
+    get:
+      tags:
+        - Raw Answers
+      summary: Get raw answers with pagination
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortDirectionParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedRawAnswers'
+
+  # ==================== Versions ====================
+  /versions:
+    post:
+      tags:
+        - Versions
+      summary: Create a new version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: string
+                  example: "1.2-alpha"
+              required:
+                - version
+      responses:
+        '201':
+          description: Version created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDTO'
+    get:
+      tags:
+        - Versions
+      summary: Get all versions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VersionDTO'
+
+  # ==================== Tags ====================
+  /tags:
+    post:
+      tags:
+        - Tags
+      summary: Create a new tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag:
+                  type: string
+                  example: "Linux Kernel"
+              required:
+                - tag
+      responses:
+        '201':
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagDTO'
+    get:
+      tags:
+        - Tags
+      summary: Get all tags
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TagDTO'
+
+  # ==================== Standard Questions ====================
+  /std-questions/import:
+    post:
+      tags:
+        - Standard Questions
+      summary: Import standard questions
+      description: Batch import standard questions (must be associated with raw questions)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/StandardQuestionImportDTO'
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+  /std-questions:
+    get:
+      tags:
+        - Standard Questions
+      summary: Get standard questions with pagination
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortDirectionParam'
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/QuestionType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/StandardQuestionStatus'
+        - name: version
+          in: query
+          schema:
+            type: string
+        - name: tags
+          in: query
+          schema:
+            type: string
+          description: Comma-separated tag names
+        - name: originalRawQuestionId
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedStandardQuestions'
+
+  /std-questions/{id}:
+    get:
+      tags:
+        - Standard Questions
+      summary: Get standard question by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardQuestionDTO'
+
+  /std-questions/{id}/tags:
+    post:
+      tags:
+        - Standard Questions
+      summary: Add tag to standard question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tagName:
+                  type: string
+              required:
+                - tagName
+      responses:
+        '200':
+          description: Tag added successfully
+
+  /std-questions/{id}/tags/{tagName}:
+    delete:
+      tags:
+        - Standard Questions
+      summary: Remove tag from standard question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tagName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tag removed successfully
+
+  /raw-questions/{rawQuestionId}/std-questions:
+    get:
+      tags:
+        - Standard Questions
+      summary: Get standard questions converted from a raw question
+      parameters:
+        - name: rawQuestionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedStandardQuestions'
+
+  # ==================== Candidate Answers ====================
+  /candidate-answers/import:
+    post:
+      tags:
+        - Candidate Answers
+      summary: Import candidate answers
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AnswerType'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file containing candidate answers
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+  /candidate-answers:
+    get:
+      tags:
+        - Candidate Answers
+      summary: Get candidate answers with pagination
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AnswerType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/CandidateAnswerStatus'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedCandidateAnswers'
+
+  /candidate-answers/{id}:
+    patch:
+      tags:
+        - Candidate Answers
+      summary: Update candidate answer status
+      description: Update status, automatically creates standard answer when set to ACCEPTED
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/CandidateAnswerStatus'
+                score:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+                  description: Required when status is ACCEPTED
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateAnswerDTO'
+
+  /std-questions/{questionId}/candidate-answers:
+    get:
+      tags:
+        - Candidate Answers
+      summary: Get candidate answers for a standard question
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedCandidateAnswers'
+
+  # ==================== Standard Answers ====================
+  /std-answers:
+    get:
+      tags:
+        - Standard Answers
+      summary: Get standard answers with pagination
+      description: Standard answers can only be created by accepting candidate answers
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AnswerType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/StandardAnswerStatus'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedStandardAnswers'
+
+  /std-answers/{id}:
+    patch:
+      tags:
+        - Standard Answers
+      summary: Update standard answer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/StandardAnswerStatus'
+                score:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+      responses:
+        '200':
+          description: Answer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardAnswerDTO'
+
+  /std-questions/{questionId}/std-answers:
+    get:
+      tags:
+        - Standard Answers
+      summary: Get standard answers for a question
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedStandardAnswers'
+
+  # ==================== Evaluation Tags ====================
+  /evaluation-tags:
+    post:
+      tags:
+        - Evaluation Tags
+      summary: Create evaluation tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dataSetVersion:
+                  type: string
+                  description: Must exist in versions table
+                evaluationTime:
+                  type: integer
+                model:
+                  type: string
+                  example: "GPT-4-Turbo"
+              required:
+                - dataSetVersion
+                - evaluationTime
+                - model
+      responses:
+        '201':
+          description: Evaluation tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationTagDTO'
+    get:
+      tags:
+        - Evaluation Tags
+      summary: Get all evaluation tags
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvaluationTagDTO'
+
+  # ==================== Evaluation Results ====================
+  /evaluation-results/import:
+    post:
+      tags:
+        - Evaluation Results
+      summary: Import evaluation results
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EvaluationResultImportDTO'
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+  /evaluation-results:
+    get:
+      tags:
+        - Evaluation Results
+      summary: Get evaluation results with pagination
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: evaluationTagId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/AnswerType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/EvaluationResultStatus'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedEvaluationResults'
+
+  /evaluation-results/export:
+    get:
+      tags:
+        - Evaluation Results
+      summary: Export evaluation results for analysis
+      description: Export comparison data (standard answers + evaluation results)
+      parameters:
+        - name: evaluationTagId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: type
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/AnswerType'
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Export file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationExportDTO'
+            text/csv:
+              schema:
+                type: string
+
+  # ==================== Analysis Tags ====================
+  /analysis-tags:
+    post:
+      tags:
+        - Analysis Tags
+      summary: Create analysis tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evaluationTagId:
+                  type: integer
+                  format: int64
+                  description: Must reference existing evaluation tag
+                analysisTime:
+                  type: integer
+                model:
+                  type: string
+                  example: "ScoringLLM-v1"
+              required:
+                - evaluationTagId
+                - analysisTime
+                - model
+      responses:
+        '201':
+          description: Analysis tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisTagDTO'
+    get:
+      tags:
+        - Analysis Tags
+      summary: Get all analysis tags
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnalysisTagDTO'
+
+  # ==================== Evaluation Analysis ====================
+  /evaluation-analysis/import:
+    post:
+      tags:
+        - Evaluation Analysis
+      summary: Import evaluation analysis results
+      description: Automatically updates evaluation_results status to ANALYZED
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EvaluationAnalysisImportDTO'
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+
+  /evaluation-analysis:
+    get:
+      tags:
+        - Evaluation Analysis
+      summary: Get evaluation analysis results with pagination
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: analysisTagId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: minScore
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10
+        - name: maxScore
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedEvaluationAnalysis'
+
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Page number (0-based)
+    
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size
+    
+    SortByParam:
+      name: sortBy
+      in: query
+      schema:
+        type: string
+        default: id
+      description: Sort field
+    
+    SortDirectionParam:
+      name: sortDirection
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+      description: Sort direction
+
+  schemas:
+    # ==================== Enums ====================
+    QuestionStatus:
+      type: string
+      enum:
+        - WAITING_CONVERTED
+        - CONVERTED
+        - OMITTED
+
+    QuestionType:
+      type: string
+      enum:
+        - OBJECTIVE
+        - SUBJECTIVE
+
+    AnswerType:
+      type: string
+      enum:
+        - OBJECTIVE
+        - SUBJECTIVE
+
+    StandardQuestionStatus:
+      type: string
+      enum:
+        - WAITING_ANSWERS
+        - ANSWERED
+
+    CandidateAnswerStatus:
+      type: string
+      enum:
+        - PENDING
+        - ACCEPTED
+        - REJECTED
+
+    StandardAnswerStatus:
+      type: string
+      enum:
+        - ACCEPTED
+        - OMITTED
+
+    EvaluationResultStatus:
+      type: string
+      enum:
+        - PENDING
+        - ANALYZED
+        - OMITTED
+
+    # ==================== Basic DTOs ====================
+    RawQuestionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        content:
+          type: string
+        sourcePlatform:
+          type: string
+        tags:
+          type: string
+          description: Comma-separated tags
+        postId:
+          type: integer
+        score:
+          type: integer
+        status:
+          $ref: '#/components/schemas/QuestionStatus'
+        stdQuestionCount:
+          type: integer
+          description: Number of converted standard questions
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RawAnswerDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        rawQuestionId:
+          type: integer
+          format: int64
+        content:
+          type: string
+        sourcePlatform:
+          type: string
+        postId:
+          type: integer
+        score:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    VersionDTO:
+      type: object
+      properties:
+        version:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TagDTO:
+      type: object
+      properties:
+        tag:
+          type: string
+
+    StandardQuestionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        originalRawQuestionId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/QuestionType'
+        content:
+          type: string
+        status:
+          $ref: '#/components/schemas/StandardQuestionStatus'
+        createdAt:
+          type: string
+          format: date-time
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionDTO'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagDTO'
+        originalRawQuestion:
+          $ref: '#/components/schemas/RawQuestionDTO'
+
+    StandardQuestionImportDTO:
+      type: object
+      properties:
+        originalRawQuestionId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/QuestionType'
+        content:
+          type: string
+        status:
+          $ref: '#/components/schemas/StandardQuestionStatus'
+        versionIds:
+          type: array
+          items:
+            type: string
+        tagNames:
+          type: array
+          items:
+            type: string
+      required:
+        - originalRawQuestionId
+        - type
+        - content
+
+    CandidateAnswerDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        stdQuestionId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/AnswerType'
+        status:
+          $ref: '#/components/schemas/CandidateAnswerStatus'
+        objAnswer:
+          type: string
+          description: For OBJECTIVE type only
+        subAnswer:
+          type: string
+          description: For SUBJECTIVE type only
+        createdAt:
+          type: string
+          format: date-time
+
+    StandardAnswerDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        stdQuestionId:
+          type: integer
+          format: int64
+        selectedFromCandidateId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/AnswerType'
+        score:
+          type: integer
+          minimum: 0
+          maximum: 10
+        status:
+          $ref: '#/components/schemas/StandardAnswerStatus'
+        objAnswer:
+          type: string
+          description: For OBJECTIVE type only
+        subAnswer:
+          type: string
+          description: For SUBJECTIVE type only
+        createdAt:
+          type: string
+          format: date-time
+
+    EvaluationTagDTO:
+      type: object
+      properties:
+        tagId:
+          type: integer
+          format: int64
+        dataSetVersion:
+          type: string
+        evaluationTime:
+          type: integer
+        model:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    EvaluationResultDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        evaluationTagId:
+          type: integer
+          format: int64
+        stdQuestionId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/AnswerType'
+        content:
+          type: string
+          description: LLM generated answer
+        status:
+          $ref: '#/components/schemas/EvaluationResultStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    EvaluationResultImportDTO:
+      type: object
+      properties:
+        evaluationTagId:
+          type: integer
+          format: int64
+        stdQuestionId:
+          type: integer
+          format: int64
+        type:
+          $ref: '#/components/schemas/AnswerType'
+        content:
+          type: string
+      required:
+        - evaluationTagId
+        - stdQuestionId
+        - type
+        - content
+
+    AnalysisTagDTO:
+      type: object
+      properties:
+        analysisTagId:
+          type: integer
+          format: int64
+        evaluationTagId:
+          type: integer
+          format: int64
+        analysisTime:
+          type: integer
+        model:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    EvaluationAnalysisDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        evaluationResultId:
+          type: integer
+          format: int64
+        analysisTagId:
+          type: integer
+          format: int64
+        score:
+          type: integer
+          minimum: 0
+          maximum: 10
+        createdAt:
+          type: string
+          format: date-time
+
+    EvaluationAnalysisImportDTO:
+      type: object
+      properties:
+        evaluationResultId:
+          type: integer
+          format: int64
+        analysisTagId:
+          type: integer
+          format: int64
+        score:
+          type: integer
+          minimum: 0
+          maximum: 10
+      required:
+        - evaluationResultId
+        - analysisTagId
+        - score
+
+    EvaluationExportDTO:
+      type: object
+      properties:
+        evaluationId:
+          type: integer
+          format: int64
+        stdQuestionId:
+          type: integer
+          format: int64
+        score:
+          type: integer
+        type:
+          $ref: '#/components/schemas/AnswerType'
+        resultText:
+          type: string
+        stdAnswerText:
+          type: string
+
+    # ==================== Paged Responses ====================
+    PagedRawQuestions:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/RawQuestionDTO'
+
+    PagedRawAnswers:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/RawAnswerDTO'
+
+    PagedStandardQuestions:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/StandardQuestionDTO'
+
+    PagedCandidateAnswers:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/CandidateAnswerDTO'
+
+    PagedStandardAnswers:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/StandardAnswerDTO'
+
+    PagedEvaluationResults:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/EvaluationResultDTO'
+
+    PagedEvaluationAnalysis:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/EvaluationAnalysisDTO'
+
+    # ==================== Common Schemas ====================
+    PageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items: {}
+        pageable:
+          type: object
+          properties:
+            sort:
+              type: object
+              properties:
+                empty:
+                  type: boolean
+                sorted:
+                  type: boolean
+                unsorted:
+                  type: boolean
+            offset:
+              type: integer
+            pageSize:
+              type: integer
+            pageNumber:
+              type: integer
+            paged:
+              type: boolean
+            unpaged:
+              type: boolean
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        last:
+          type: boolean
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+        size:
+          type: integer
+        number:
+          type: integer
+        empty:
+          type: boolean
+
+    ImportResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        importedCount:
+          type: integer
+        failedCount:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+              error:
+                type: string
+
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: string
+
+tags:
+  - name: Raw Questions
+    description: Operations for raw questions from source platforms
+  - name: Raw Answers
+    description: Operations for raw answers from source platforms
+  - name: Versions
+    description: Dataset version management
+  - name: Tags
+    description: Tag management for questions
+  - name: Standard Questions
+    description: Operations for standardized questions
+  - name: Candidate Answers
+    description: Operations for candidate answers
+  - name: Standard Answers
+    description: Operations for standard answers (created from candidate answers)
+  - name: Evaluation Tags
+    description: Tags for evaluation batches
+  - name: Evaluation Results
+    description: Operations for LLM evaluation results
+  - name: Analysis Tags
+    description: Tags for analysis batches
+  - name: Evaluation Analysis
+    description: Operations for evaluation result analysis 
