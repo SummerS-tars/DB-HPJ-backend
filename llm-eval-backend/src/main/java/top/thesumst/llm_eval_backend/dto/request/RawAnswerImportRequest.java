@@ -10,7 +10,7 @@ import lombok.Data;
 public class RawAnswerImportRequest {
 
     @NotNull(message = "原始问题ID不能为空")
-    private Integer rawQuestionId;
+    private Long rawQuestionId;
 
     private String content;
 

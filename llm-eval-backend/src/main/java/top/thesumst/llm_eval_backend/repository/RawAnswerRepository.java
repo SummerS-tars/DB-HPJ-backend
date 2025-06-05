@@ -10,12 +10,12 @@ import top.thesumst.llm_eval_backend.entity.RawAnswer;
  * Repository interface for RawAnswer entity
  */
 @Repository
-public interface RawAnswerRepository extends JpaRepository<RawAnswer, Integer> {
+public interface RawAnswerRepository extends JpaRepository<RawAnswer, Long> {
 
     /**
      * Find raw answers by raw question ID with pagination
      */
-    Page<RawAnswer> findByRawQuestionId(Integer rawQuestionId, Pageable pageable);
+    Page<RawAnswer> findByRawQuestionId(Long rawQuestionId, Pageable pageable);
 
     /**
      * Find raw answers by source platform with pagination
@@ -25,7 +25,7 @@ public interface RawAnswerRepository extends JpaRepository<RawAnswer, Integer> {
     /**
      * Count answers by raw question ID
      */
-    long countByRawQuestionId(Integer rawQuestionId);
+    long countByRawQuestionId(Long rawQuestionId);
 
     /**
      * Check if a raw answer exists by post ID and source platform

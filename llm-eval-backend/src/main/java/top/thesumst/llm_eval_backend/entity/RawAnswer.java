@@ -19,10 +19,10 @@ public class RawAnswer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "raw_question_id", nullable = false)
-    private Integer rawQuestionId;
+    private Long rawQuestionId;
 
     @Column(columnDefinition = "TEXT")
     private String content;

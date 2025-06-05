@@ -23,13 +23,13 @@ public class EvaluationResult {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "evaluation_tag_id", nullable = false)
-    private Integer evaluationTagId;
+    private Long evaluationTagId;
 
     @Column(name = "std_question_id", nullable = false)
-    private Integer stdQuestionId;
+    private Long stdQuestionId;
 
     @Column(columnDefinition = "TEXT")
     private String content;

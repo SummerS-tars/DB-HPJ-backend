@@ -13,7 +13,7 @@ import top.thesumst.llm_eval_backend.entity.enums.RawQuestionStatus;
  * Repository interface for RawQuestion entity
  */
 @Repository
-public interface RawQuestionRepository extends JpaRepository<RawQuestion, Integer> {
+public interface RawQuestionRepository extends JpaRepository<RawQuestion, Long> {
 
     /**
      * Find raw questions by status with pagination

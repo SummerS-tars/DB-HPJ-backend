@@ -20,7 +20,7 @@ public class StandardAnswerObj {
 
     @Id
     @Column(name = "std_answer_id")
-    private Integer stdAnswerId;
+    private Long stdAnswerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "obj_answer", nullable = false)

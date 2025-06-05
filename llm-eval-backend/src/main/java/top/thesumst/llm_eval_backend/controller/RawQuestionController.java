@@ -91,7 +91,7 @@ public class RawQuestionController {
     @GetMapping("/{id}")
     public ResponseEntity<top.thesumst.llm_eval_backend.dto.response.ApiResponse<RawQuestionResponse>> getQuestion(
             @Parameter(description = "问题ID", required = true)
-            @PathVariable Integer id) {
+            @PathVariable Long id) {
         
         RawQuestionResponse result = rawQuestionService.getRawQuestionById(id);
         
@@ -107,7 +107,7 @@ public class RawQuestionController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<top.thesumst.llm_eval_backend.dto.response.ApiResponse<RawQuestionResponse>> updateStatus(
             @Parameter(description = "问题ID", required = true)
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @Valid @RequestBody StatusUpdateRequest request) {
         
         log.info("Updating raw question status: id={}, status={}", id, request.getStatus());

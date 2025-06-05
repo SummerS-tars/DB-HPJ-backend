@@ -19,7 +19,7 @@ public class CandidateAnswerSub {
 
     @Id
     @Column(name = "candidate_answer_id")
-    private Integer candidateAnswerId;
+    private Long candidateAnswerId;
 
     @Column(name = "sub_answer", columnDefinition = "TEXT", nullable = false)
     private String subAnswer;

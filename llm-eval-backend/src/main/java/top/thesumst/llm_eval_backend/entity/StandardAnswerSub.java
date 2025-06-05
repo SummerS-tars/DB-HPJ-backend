@@ -19,7 +19,7 @@ public class StandardAnswerSub {
 
     @Id
     @Column(name = "std_answer_id")
-    private Integer stdAnswerId;
+    private Long stdAnswerId;
 
     @Column(name = "sub_answer", columnDefinition = "TEXT", nullable = false)
     private String subAnswer;

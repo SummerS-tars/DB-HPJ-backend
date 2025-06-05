@@ -22,10 +22,10 @@ public class AnalysisTag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "analysis_tag_id")
-    private Integer analysisTagId;
+    private Long analysisTagId;
 
     @Column(name = "evaluation_tag_id", nullable = false)
-    private Integer evaluationTagId;
+    private Long evaluationTagId;
 
     @Column(name = "analysis_time")
     private Integer analysisTime;

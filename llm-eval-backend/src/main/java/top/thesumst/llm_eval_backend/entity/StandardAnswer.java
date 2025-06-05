@@ -23,10 +23,10 @@ public class StandardAnswer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "std_question_id", nullable = false)
-    private Integer stdQuestionId;
+    private Long stdQuestionId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -42,7 +42,7 @@ public class StandardAnswer {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "selected_from_candidate_id", nullable = false)
-    private Integer selectedFromCandidateId;
+    private Long selectedFromCandidateId;
 
     // Many-to-one relationship with StandardQuestion
     @ManyToOne(fetch = FetchType.LAZY)

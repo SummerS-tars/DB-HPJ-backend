@@ -133,7 +133,7 @@ public class RawQuestionService {
     /**
      * Get raw question by ID
      */
-    public RawQuestionResponse getRawQuestionById(Integer id) {
+    public RawQuestionResponse getRawQuestionById(Long id) {
         RawQuestion question = rawQuestionRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
                         "原始问题不存在，ID: " + id));
@@ -145,7 +145,7 @@ public class RawQuestionService {
      * Update raw question status
      */
     @Transactional
-    public RawQuestionResponse updateStatus(Integer id, RawQuestionStatus status) {
+    public RawQuestionResponse updateStatus(Long id, RawQuestionStatus status) {
         RawQuestion question = rawQuestionRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
                         "原始问题不存在，ID: " + id));
@@ -160,7 +160,7 @@ public class RawQuestionService {
 
     /**
      * Parse CSV line to RawQuestionImportRequest
-     * Expected format: title,content,sourcePlatform,tags,postId,score
+     * Expected format: PostId,title,content,tags,score
      */
     private RawQuestionImportRequest parseCsvLine(String line, String sourcePlatform) {
         String[] fields = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1); // Handle CSV with quotes
@@ -171,22 +171,27 @@ public class RawQuestionService {
 
         RawQuestionImportRequest request = new RawQuestionImportRequest();
         
-        // Remove quotes if present
-        request.setTitle(cleanCsvField(fields[0]));
-        request.setContent(fields.length > 1 ? cleanCsvField(fields[1]) : null);
-        request.setSourcePlatform(sourcePlatform);
-        request.setTags(fields.length > 2 ? cleanCsvField(fields[2]) : null);
-        
-        // Parse postId
-        if (fields.length > 3 && !fields[3].trim().isEmpty()) {
+        // Parse postId (first field)
+        if (fields.length > 0 && !fields[0].trim().isEmpty()) {
             try {
-                request.setPostId(Integer.parseInt(cleanCsvField(fields[3])));
+                request.setPostId(Integer.parseInt(cleanCsvField(fields[0])));
             } catch (NumberFormatException e) {
-                log.warn("Invalid postId format: {}", fields[3]);
+                log.warn("Invalid postId format: {}", fields[0]);
             }
         }
         
-        // Parse score
+        // Parse title (second field)
+        request.setTitle(fields.length > 1 ? cleanCsvField(fields[1]) : null);
+        
+        // Parse content (third field)
+        request.setContent(fields.length > 2 ? cleanCsvField(fields[2]) : null);
+        
+        request.setSourcePlatform(sourcePlatform);
+        
+        // Parse tags (fourth field)
+        request.setTags(fields.length > 3 ? cleanCsvField(fields[3]) : null);
+        
+        // Parse score (fifth field)
         if (fields.length > 4 && !fields[4].trim().isEmpty()) {
             try {
                 request.setScore(Integer.parseInt(cleanCsvField(fields[4])));

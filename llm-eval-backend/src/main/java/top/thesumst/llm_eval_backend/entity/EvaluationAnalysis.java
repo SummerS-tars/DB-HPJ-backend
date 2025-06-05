@@ -21,13 +21,13 @@ public class EvaluationAnalysis {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "evaluation_result_id", nullable = false)
-    private Integer evaluationResultId;
+    private Long evaluationResultId;
 
     @Column(name = "analysis_tag_id", nullable = false)
-    private Integer analysisTagId;
+    private Long analysisTagId;
 
     private Integer score; // 0-10
 

@@ -86,7 +86,7 @@ public class RawAnswerController {
     @GetMapping("/raw-questions/{questionId}/answers")
     public ResponseEntity<top.thesumst.llm_eval_backend.dto.response.ApiResponse<Page<RawAnswerResponse>>> getAnswersByQuestionId(
             @Parameter(description = "问题ID", required = true)
-            @PathVariable Integer questionId,
+            @PathVariable Long questionId,
             @Parameter(description = "页码", example = "0")
             @RequestParam(value = "page", defaultValue = "0") int page,
             @Parameter(description = "每页大小", example = "20")
@@ -110,7 +110,7 @@ public class RawAnswerController {
     @GetMapping("/raw-answers/{id}")
     public ResponseEntity<top.thesumst.llm_eval_backend.dto.response.ApiResponse<RawAnswerResponse>> getAnswer(
             @Parameter(description = "答案ID", required = true)
-            @PathVariable Integer id) {
+            @PathVariable Long id) {
         
         RawAnswerResponse result = rawAnswerService.getRawAnswerById(id);
         

@@ -25,10 +25,10 @@ public class StandardQuestion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "original_raw_question_id", nullable = false)
-    private Integer originalRawQuestionId;
+    private Long originalRawQuestionId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

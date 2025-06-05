@@ -138,7 +138,7 @@ public class RawAnswerService {
     /**
      * Get raw answers by question ID
      */
-    public Page<RawAnswerResponse> getRawAnswersByQuestionId(Integer questionId, int page, int size, 
+    public Page<RawAnswerResponse> getRawAnswersByQuestionId(Long questionId, int page, int size, 
                                                              String sortBy, String order) {
         
         // Validate that question exists
@@ -160,7 +160,7 @@ public class RawAnswerService {
     /**
      * Get raw answer by ID
      */
-    public RawAnswerResponse getRawAnswerById(Integer id) {
+    public RawAnswerResponse getRawAnswerById(Long id) {
         RawAnswer answer = rawAnswerRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
                         "原始答案不存在，ID: " + id));
@@ -183,7 +183,7 @@ public class RawAnswerService {
         
         // Parse rawQuestionId
         try {
-            request.setRawQuestionId(Integer.parseInt(cleanCsvField(fields[0])));
+            request.setRawQuestionId(Long.parseLong(cleanCsvField(fields[0])));
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid rawQuestionId format: " + fields[0]);
         }

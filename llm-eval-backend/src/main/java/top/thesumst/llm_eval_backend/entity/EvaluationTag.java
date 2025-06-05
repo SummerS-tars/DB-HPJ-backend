@@ -22,7 +22,7 @@ public class EvaluationTag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
-    private Integer tagId;
+    private Long tagId;
 
     @Column(name = "data_set_version", length = 50)
     private String dataSetVersion;

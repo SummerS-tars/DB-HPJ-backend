@@ -23,10 +23,10 @@ public class CandidateAnswer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "std_question_id", nullable = false)
-    private Integer stdQuestionId;
+    private Long stdQuestionId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
