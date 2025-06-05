@@ -160,43 +160,61 @@ public class RawQuestionService {
 
     /**
      * Parse CSV line to RawQuestionImportRequest
-     * Expected format: PostId,title,content,tags,score
+     * Expected format: title,content,tags,postId,score
      */
     private RawQuestionImportRequest parseCsvLine(String line, String sourcePlatform) {
         String[] fields = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1); // Handle CSV with quotes
         
-        if (fields.length < 2) {
+        if (fields.length < 1) {
             throw new IllegalArgumentException("CSV line format invalid: " + line);
         }
 
         RawQuestionImportRequest request = new RawQuestionImportRequest();
         
-        // Parse postId (first field)
-        if (fields.length > 0 && !fields[0].trim().isEmpty()) {
-            try {
-                request.setPostId(Integer.parseInt(cleanCsvField(fields[0])));
-            } catch (NumberFormatException e) {
-                log.warn("Invalid postId format: {}", fields[0]);
-            }
+        // Parse title (first field) - required field
+        String title = fields.length > 0 ? cleanCsvField(fields[0]) : null;
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Title is required but empty");
         }
         
-        // Parse title (second field)
-        request.setTitle(fields.length > 1 ? cleanCsvField(fields[1]) : null);
+        // Trim title if too long (database limit is 500 characters)
+        if (title.length() > 500) {
+            title = title.substring(0, 497) + "...";
+            log.warn("Title truncated to fit database limit: {}", title);
+        }
+        request.setTitle(title);
         
-        // Parse content (third field)
-        request.setContent(fields.length > 2 ? cleanCsvField(fields[2]) : null);
+        // Parse content (second field)
+        request.setContent(fields.length > 1 ? cleanCsvField(fields[1]) : null);
         
         request.setSourcePlatform(sourcePlatform);
         
-        // Parse tags (fourth field)
-        request.setTags(fields.length > 3 ? cleanCsvField(fields[3]) : null);
+        // Parse tags (third field)
+        request.setTags(fields.length > 2 ? cleanCsvField(fields[2]) : null);
+        
+        // Parse postId (fourth field)
+        if (fields.length > 3 && !fields[3].trim().isEmpty()) {
+            try {
+                String postIdStr = cleanCsvField(fields[3]);
+                if (postIdStr != null && !postIdStr.isEmpty()) {
+                    request.setPostId(Integer.parseInt(postIdStr));
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid postId format: {}, will skip setting postId", fields[3]);
+                // Don't throw exception, just skip setting postId
+            }
+        }
         
         // Parse score (fifth field)
         if (fields.length > 4 && !fields[4].trim().isEmpty()) {
             try {
-                request.setScore(Integer.parseInt(cleanCsvField(fields[4])));
+                String scoreStr = cleanCsvField(fields[4]);
+                if (scoreStr != null && !scoreStr.isEmpty()) {
+                    request.setScore(Integer.parseInt(scoreStr));
+                }
             } catch (NumberFormatException e) {
-                log.warn("Invalid score format: {}", fields[4]);
+                log.warn("Invalid score format: {}, will use default score 0", fields[4]);
+                request.setScore(0); // Default score
             }
         }
         

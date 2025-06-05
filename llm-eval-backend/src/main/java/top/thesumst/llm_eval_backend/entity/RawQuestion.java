@@ -28,7 +28,7 @@ public class RawQuestion {
     @Column(nullable = false)
     private RawQuestionStatus status = RawQuestionStatus.WAITING_CONVERTED;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String title;
 
     @Column(columnDefinition = "TEXT")

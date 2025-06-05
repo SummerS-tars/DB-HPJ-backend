@@ -1,0 +1,84 @@
+package top.thesumst.llm_eval_backend.repository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import top.thesumst.llm_eval_backend.entity.StandardQuestion;
+import top.thesumst.llm_eval_backend.entity.enums.QuestionType;
+import top.thesumst.llm_eval_backend.entity.enums.StandardQuestionStatus;
+
+/**
+ * Repository interface for StandardQuestion entity
+ */
+@Repository
+public interface StandardQuestionRepository extends JpaRepository<StandardQuestion, Long> {
+
+    /**
+     * Find standard questions by type with pagination
+     */
+    Page<StandardQuestion> findByType(QuestionType type, Pageable pageable);
+
+    /**
+     * Find standard questions by type and status with pagination
+     */
+    Page<StandardQuestion> findByTypeAndStatus(QuestionType type, StandardQuestionStatus status, Pageable pageable);
+
+    /**
+     * Find standard questions by original raw question ID
+     */
+    Page<StandardQuestion> findByOriginalRawQuestionId(Long originalRawQuestionId, Pageable pageable);
+
+    /**
+     * Find standard questions by version
+     */
+    @Query("SELECT sq FROM StandardQuestion sq JOIN sq.versions v WHERE v.version = :version")
+    Page<StandardQuestion> findByVersion(@Param("version") String version, Pageable pageable);
+
+    /**
+     * Find standard questions by tag
+     */
+    @Query("SELECT sq FROM StandardQuestion sq JOIN sq.tags t WHERE t.tag = :tag")
+    Page<StandardQuestion> findByTag(@Param("tag") String tag, Pageable pageable);
+
+    /**
+     * Find standard questions by multiple tags (containing all tags)
+     */
+    @Query("SELECT sq FROM StandardQuestion sq JOIN sq.tags t WHERE t.tag IN :tags GROUP BY sq HAVING COUNT(DISTINCT t.tag) = :tagCount")
+    Page<StandardQuestion> findByAllTags(@Param("tags") String[] tags, @Param("tagCount") long tagCount, Pageable pageable);
+
+    /**
+     * Complex query with multiple filters
+     */
+    @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
+           "LEFT JOIN sq.versions v " +
+           "LEFT JOIN sq.tags t " +
+           "WHERE (:type IS NULL OR sq.type = :type) " +
+           "AND (:status IS NULL OR sq.status = :status) " +
+           "AND (:version IS NULL OR v.version = :version) " +
+           "AND (:originalRawQuestionId IS NULL OR sq.originalRawQuestionId = :originalRawQuestionId) " +
+           "AND (:tag IS NULL OR t.tag = :tag)")
+    Page<StandardQuestion> findByFilters(@Param("type") QuestionType type,
+                                       @Param("status") StandardQuestionStatus status,
+                                       @Param("version") String version,
+                                       @Param("originalRawQuestionId") Long originalRawQuestionId,
+                                       @Param("tag") String tag,
+                                       Pageable pageable);
+
+    /**
+     * Check if a standard question already exists for the given raw question
+     */
+    boolean existsByOriginalRawQuestionId(Long originalRawQuestionId);
+
+    /**
+     * Count standard questions by status
+     */
+    long countByStatus(StandardQuestionStatus status);
+
+    /**
+     * Count standard questions by type
+     */
+    long countByType(QuestionType type);
+} 
