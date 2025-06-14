@@ -26,7 +26,7 @@ import jakarta.validation.constraints.Positive;
  * Controller for Evaluation Analysis management
  */
 @RestController
-@RequestMapping("/api/evaluation-analysis")
+@RequestMapping("/api/v1/evaluation-analysis")
 @RequiredArgsConstructor
 @Slf4j
 @Validated

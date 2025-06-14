@@ -25,7 +25,7 @@ import java.util.List;
  * Controller for Analysis Tag management
  */
 @RestController
-@RequestMapping("/api/analysis-tags")
+@RequestMapping("/api/v1/analysis-tags")
 @RequiredArgsConstructor
 @Slf4j
 @Validated
