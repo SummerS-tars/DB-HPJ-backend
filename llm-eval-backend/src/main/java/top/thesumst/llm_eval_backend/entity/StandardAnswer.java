@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = {"standardQuestion", "selectedFromCandidate", "standardAnswerObj", "standardAnswerSub"})
 public class StandardAnswer {
 
     @Id

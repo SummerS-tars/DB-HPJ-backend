@@ -15,7 +15,7 @@ import top.thesumst.llm_eval_backend.entity.enums.ObjectiveAnswer;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = {"candidateAnswer"})
 public class CandidateAnswerObj {
 
     @Id

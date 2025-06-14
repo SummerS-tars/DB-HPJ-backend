@@ -25,6 +25,7 @@ import top.thesumst.llm_eval_backend.exception.BusinessException;
 import top.thesumst.llm_eval_backend.exception.ErrorCode;
 import top.thesumst.llm_eval_backend.repository.RawQuestionRepository;
 import top.thesumst.llm_eval_backend.repository.StandardQuestionRepository;
+import top.thesumst.llm_eval_backend.repository.StandardAnswerRepository;
 import top.thesumst.llm_eval_backend.repository.TagRepository;
 import top.thesumst.llm_eval_backend.repository.VersionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 public class StandardQuestionService {
 
     private final StandardQuestionRepository standardQuestionRepository;
+    private final StandardAnswerRepository standardAnswerRepository;
     private final RawQuestionRepository rawQuestionRepository;
     private final VersionRepository versionRepository;
     private final TagRepository tagRepository;
@@ -316,8 +318,8 @@ public class StandardQuestionService {
     public String exportStandardQuestionsWithAnswers(String version, QuestionType type, String tag) {
         log.info("Exporting standard questions with answers - version: {}, type: {}, tag: {}", version, type, tag);
 
-        // Query standard questions with their answers
-        List<StandardQuestion> questions = standardQuestionRepository.findQuestionsWithAnswersForExport(type, version, tag);
+        // Query standard questions (without answers to avoid Cartesian product)
+        List<StandardQuestion> questions = standardQuestionRepository.findQuestionsForExport(type, version, tag);
 
         if (questions.isEmpty()) {
             log.warn("No standard questions with answers found for export criteria");
@@ -366,9 +368,19 @@ public class StandardQuestionService {
         StandardQuestionAnswerExportResponse.QuestionInfo questionInfo = 
                 new StandardQuestionAnswerExportResponse.QuestionInfo(question.getId(), question.getContent());
 
-        // Create answer info list
-        List<StandardQuestionAnswerExportResponse.AnswerInfo> answerInfos = question.getStandardAnswers().stream()
+        // Fetch answers separately to avoid duplicates from JOIN queries
+        List<StandardAnswer> answers = standardAnswerRepository.findWithContentByStdQuestionId(question.getId());
+        
+        // Create answer info list - filter for ACCEPTED status and remove duplicates by ID
+        List<StandardQuestionAnswerExportResponse.AnswerInfo> answerInfos = answers.stream()
                 .filter(answer -> answer.getStatus().name().equals("ACCEPTED")) // Only accepted answers
+                .collect(Collectors.toMap(
+                    StandardAnswer::getId, // Key: answer ID
+                    answer -> answer,      // Value: answer object
+                    (existing, replacement) -> existing // Keep first occurrence if duplicate
+                ))
+                .values()
+                .stream()
                 .map(this::convertToAnswerInfo)
                 .collect(Collectors.toList());
 

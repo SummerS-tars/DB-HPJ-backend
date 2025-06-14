@@ -18,7 +18,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = {"standardQuestion", "candidateAnswerObj", "candidateAnswerSub", "standardAnswers"})
 public class CandidateAnswer {
 
     @Id

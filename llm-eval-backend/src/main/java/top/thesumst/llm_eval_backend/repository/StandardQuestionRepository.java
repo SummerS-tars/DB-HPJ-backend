@@ -106,20 +106,17 @@ public interface StandardQuestionRepository extends JpaRepository<StandardQuesti
     Optional<StandardQuestion> findByIdWithRelationships(@Param("id") Long id);
 
     /**
-     * Find standard questions with their answers for export
+     * Find standard questions for export (without answers to avoid Cartesian product)
      */
     @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
-           "LEFT JOIN FETCH sq.versions v " +
-           "LEFT JOIN FETCH sq.tags t " +
-           "LEFT JOIN FETCH sq.standardAnswers sa " +
-           "LEFT JOIN FETCH sa.standardAnswerObj sao " +
-           "LEFT JOIN FETCH sa.standardAnswerSub sas " +
+           "LEFT JOIN sq.versions v " +
+           "LEFT JOIN sq.tags t " +
            "WHERE (:type IS NULL OR sq.type = :type) " +
            "AND (:version IS NULL OR v.version = :version) " +
            "AND (:tag IS NULL OR t.tag = :tag) " +
-           "AND sa.status = 'ACCEPTED' " +
+           "AND EXISTS (SELECT 1 FROM StandardAnswer sa WHERE sa.stdQuestionId = sq.id AND sa.status = 'ACCEPTED') " +
            "ORDER BY sq.id")
-    List<StandardQuestion> findQuestionsWithAnswersForExport(@Param("type") QuestionType type,
-                                                            @Param("version") String version,
-                                                            @Param("tag") String tag);
+    List<StandardQuestion> findQuestionsForExport(@Param("type") QuestionType type,
+                                                 @Param("version") String version,
+                                                 @Param("tag") String tag);
 } 
