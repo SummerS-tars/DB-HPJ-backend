@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import top.thesumst.llm_eval_backend.dto.request.RawQuestionImportRequest;
 import top.thesumst.llm_eval_backend.dto.response.ImportResponse;
 import top.thesumst.llm_eval_backend.dto.response.RawQuestionResponse;
+import top.thesumst.llm_eval_backend.dto.response.RawQuestionExportResponse;
 import top.thesumst.llm_eval_backend.dto.response.StackOverflowPostIdsResponse;
 import top.thesumst.llm_eval_backend.entity.RawQuestion;
 import top.thesumst.llm_eval_backend.entity.enums.RawQuestionStatus;
@@ -25,6 +26,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Service for raw question operations
@@ -234,6 +238,62 @@ public class RawQuestionService {
         }
         
         return request;
+    }
+
+    /**
+     * Export raw questions to JSON format for standardization
+     * @param includeConverted whether to include questions with CONVERTED status (false by default)
+     * @param limit number of questions to export (null for all questions)
+     * @return JSON string containing exported raw questions
+     */
+    public String exportRawQuestionsForStandardization(Boolean includeConverted, Integer limit) {
+        log.info("Exporting raw questions for standardization - includeConverted: {}, limit: {}", 
+                includeConverted, limit);
+
+        // Build query filters based on parameters
+        List<RawQuestionStatus> statusFilters = new ArrayList<>();
+        statusFilters.add(RawQuestionStatus.WAITING_CONVERTED);
+        
+        if (Boolean.TRUE.equals(includeConverted)) {
+            statusFilters.add(RawQuestionStatus.CONVERTED);
+        }
+
+        // Determine page size based on limit
+        int pageSize = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
+        Pageable pageable = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
+
+        // Query raw questions based on status filters
+        Page<RawQuestion> questionsPage = rawQuestionRepository.findByStatusIn(statusFilters, pageable);
+        List<RawQuestion> questions = questionsPage.getContent();
+
+        // Convert to export format
+        List<RawQuestionExportResponse> exportQuestions = questions.stream()
+                .map(question -> {
+                    // Use content if available, otherwise use title + content combination
+                    String exportContent = question.getContent();
+                    if (exportContent == null || exportContent.trim().isEmpty()) {
+                        exportContent = question.getTitle();
+                    }
+                    return new RawQuestionExportResponse(question.getId(), exportContent);
+                })
+                .collect(Collectors.toList());
+
+        // Convert to JSON string
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportQuestions);
+        } catch (Exception e) {
+            log.error("Failed to export raw questions to JSON", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "导出失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate export filename for raw questions
+     * Always returns the fixed filename as specified in requirements
+     */
+    public String generateRawQuestionExportFilename() {
+        return "raw_questions_for_standardize.json";
     }
 
     /**

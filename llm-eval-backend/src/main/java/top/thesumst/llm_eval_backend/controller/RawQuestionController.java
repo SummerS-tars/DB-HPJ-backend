@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -178,5 +179,34 @@ public class RawQuestionController {
                 .header("Content-Disposition", "attachment; filename=\"stackoverflow_raw_questions_postIds.json\"")
                 .header("Content-Type", "application/json; charset=UTF-8")
                 .body(simpleResponse);
+    }
+
+    @Operation(summary = "导出原始问题用于标准化", description = "导出原始问题为JSON文件，用于标准化处理")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "导出成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数无效"),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @GetMapping("/export")
+    public ResponseEntity<String> exportRawQuestionsForStandardization(
+            @Parameter(description = "是否包含已转换状态的问题", required = false)
+            @RequestParam(value = "includeConverted", required = false, defaultValue = "false") Boolean includeConverted,
+            
+            @Parameter(description = "导出问题数量限制", required = false)
+            @RequestParam(value = "limit", required = false) Integer limit) {
+        
+        log.info("Exporting raw questions for standardization - includeConverted: {}, limit: {}", 
+                includeConverted, limit);
+        
+        String jsonContent = rawQuestionService.exportRawQuestionsForStandardization(includeConverted, limit);
+        String filename = rawQuestionService.generateRawQuestionExportFilename();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentDispositionFormData("attachment", filename);
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(jsonContent);
     }
 } 

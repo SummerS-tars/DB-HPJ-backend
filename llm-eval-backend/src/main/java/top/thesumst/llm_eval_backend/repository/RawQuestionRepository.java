@@ -34,6 +34,11 @@ public interface RawQuestionRepository extends JpaRepository<RawQuestion, Long> 
     Page<RawQuestion> findByStatusAndSourcePlatform(RawQuestionStatus status, String sourcePlatform, Pageable pageable);
 
     /**
+     * Find raw questions by status in list with pagination
+     */
+    Page<RawQuestion> findByStatusIn(List<RawQuestionStatus> statuses, Pageable pageable);
+
+    /**
      * Count questions by status
      */
     long countByStatus(RawQuestionStatus status);
