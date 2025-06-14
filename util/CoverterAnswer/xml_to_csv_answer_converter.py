@@ -126,13 +126,47 @@ class XMLToCSVAnswerConverter:
     def step3_remove_html_tags(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Step 3: Remove HTML tags from content
-        Clean HTML tags from the Body field
+        Clean HTML tags from the Body field using a robust method that preserves code content
         """
         print("Step 3: Removing HTML tags...")
         
         def clean_html(text: str) -> str:
-            # Remove HTML tags using regex
-            text = re.sub(r'<[^>]+>', '', text)
+            """
+            Robust HTML cleaning that handles code content with < and > operators
+            Uses character-by-character parsing to distinguish HTML tags from content
+            """
+            # Parse character by character to find real HTML tags
+            result = []
+            i = 0
+            while i < len(text):
+                if text[i] == '<':
+                    # Check if this looks like an HTML tag
+                    tag_end = text.find('>', i)
+                    if tag_end == -1:
+                        # No closing >, just add the character
+                        result.append(text[i])
+                        i += 1
+                        continue
+                    
+                    # Extract potential tag
+                    potential_tag = text[i:tag_end + 1]
+                    
+                    # Check if it's a valid HTML tag pattern
+                    # HTML tags start with a letter and contain only valid characters
+                    if re.match(r'^<\s*/?[a-zA-Z][a-zA-Z0-9]*(?:\s+[^<>]*)?>\s*$', potential_tag):
+                        # It's a valid HTML tag, skip it (add space instead)
+                        result.append(' ')
+                        i = tag_end + 1
+                    else:
+                        # Not a valid HTML tag, keep the < character
+                        result.append(text[i])
+                        i += 1
+                else:
+                    result.append(text[i])
+                    i += 1
+            
+            text = ''.join(result)
+            
             # Clean up multiple spaces and newlines
             text = re.sub(r'\s+', ' ', text)
             # Remove leading/trailing whitespace
