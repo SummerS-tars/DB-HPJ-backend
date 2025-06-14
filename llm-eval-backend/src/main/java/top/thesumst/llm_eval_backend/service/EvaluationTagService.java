@@ -68,7 +68,7 @@ public class EvaluationTagService {
      * Get evaluation tags with pagination and filtering
      */
     public Page<EvaluationTagResponse> getEvaluationTags(int page, int size, String sortBy, String order,
-                                                         String model, String dataSetVersion) {
+                                                         String model, String dataSetVersion, Integer evaluationTime) {
         
         Sort sort = "desc".equalsIgnoreCase(order) ? 
                 Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
@@ -77,12 +77,21 @@ public class EvaluationTagService {
         
         Page<EvaluationTag> tagPage;
         
-        if (model != null && dataSetVersion != null) {
+        // Handle all combinations of filters
+        if (model != null && dataSetVersion != null && evaluationTime != null) {
+            tagPage = evaluationTagRepository.findByModelAndDataSetVersionAndEvaluationTime(model, dataSetVersion, evaluationTime, pageable);
+        } else if (model != null && dataSetVersion != null) {
             tagPage = evaluationTagRepository.findByModelAndDataSetVersion(model, dataSetVersion, pageable);
+        } else if (model != null && evaluationTime != null) {
+            tagPage = evaluationTagRepository.findByModelAndEvaluationTime(model, evaluationTime, pageable);
+        } else if (dataSetVersion != null && evaluationTime != null) {
+            tagPage = evaluationTagRepository.findByDataSetVersionAndEvaluationTime(dataSetVersion, evaluationTime, pageable);
         } else if (model != null) {
             tagPage = evaluationTagRepository.findByModel(model, pageable);
         } else if (dataSetVersion != null) {
             tagPage = evaluationTagRepository.findByDataSetVersion(dataSetVersion, pageable);
+        } else if (evaluationTime != null) {
+            tagPage = evaluationTagRepository.findByEvaluationTime(evaluationTime, pageable);
         } else {
             tagPage = evaluationTagRepository.findAll(pageable);
         }

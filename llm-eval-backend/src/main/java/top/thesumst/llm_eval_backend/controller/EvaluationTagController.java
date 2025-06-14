@@ -71,10 +71,12 @@ public class EvaluationTagController {
             @Parameter(description = "模型名称筛选")
             @RequestParam(value = "model", required = false) String model,
             @Parameter(description = "数据集版本筛选")
-            @RequestParam(value = "dataSetVersion", required = false) String dataSetVersion) {
+            @RequestParam(value = "dataSetVersion", required = false) String dataSetVersion,
+            @Parameter(description = "评估次数筛选")
+            @RequestParam(value = "evaluationTime", required = false) Integer evaluationTime) {
         
         Page<EvaluationTagResponse> result = evaluationTagService.getEvaluationTags(
-                page, size, sortBy, order, model, dataSetVersion);
+                page, size, sortBy, order, model, dataSetVersion, evaluationTime);
         
         return ResponseEntity.ok(top.thesumst.llm_eval_backend.dto.response.ApiResponse.success(result));
     }

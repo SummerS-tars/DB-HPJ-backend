@@ -33,6 +33,26 @@ public interface EvaluationTagRepository extends JpaRepository<EvaluationTag, Lo
     Page<EvaluationTag> findByModelAndDataSetVersion(String model, String dataSetVersion, Pageable pageable);
 
     /**
+     * Find evaluation tags by evaluation time with pagination
+     */
+    Page<EvaluationTag> findByEvaluationTime(Integer evaluationTime, Pageable pageable);
+
+    /**
+     * Find evaluation tags by model and evaluation time with pagination
+     */
+    Page<EvaluationTag> findByModelAndEvaluationTime(String model, Integer evaluationTime, Pageable pageable);
+
+    /**
+     * Find evaluation tags by data set version and evaluation time with pagination
+     */
+    Page<EvaluationTag> findByDataSetVersionAndEvaluationTime(String dataSetVersion, Integer evaluationTime, Pageable pageable);
+
+    /**
+     * Find evaluation tags by model, data set version and evaluation time with pagination
+     */
+    Page<EvaluationTag> findByModelAndDataSetVersionAndEvaluationTime(String model, String dataSetVersion, Integer evaluationTime, Pageable pageable);
+
+    /**
      * Find evaluation tags by model containing (case insensitive) with pagination
      */
     Page<EvaluationTag> findByModelContainingIgnoreCase(String model, Pageable pageable);
