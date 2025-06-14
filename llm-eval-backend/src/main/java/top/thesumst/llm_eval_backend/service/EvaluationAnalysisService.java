@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.util.Optional;
 
 /**
  * Service class for EvaluationAnalysis operations
@@ -113,11 +114,14 @@ public class EvaluationAnalysisService {
     public EvaluationAnalysisResponse getAnalysisResultById(Long id) {
         log.info("Getting analysis result by ID: {}", id);
 
-        EvaluationAnalysis analysis = evaluationAnalysisRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
-                        "Analysis result not found with ID: " + id));
-
-        return convertToResponse(analysis);
+        Optional<Object[]> analysisDetails = evaluationAnalysisRepository.findAnalysisResultWithDetailsById(id);
+        
+        if (analysisDetails.isPresent()) {
+            return convertDetailedResultToResponse(analysisDetails.get());
+        } else {
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
+                    "Analysis result not found with ID: " + id);
+        }
     }
 
     /**
@@ -145,9 +149,9 @@ public class EvaluationAnalysisService {
     public Page<EvaluationAnalysisResponse> getAllAnalysisResults(Pageable pageable) {
         log.info("Getting all analysis results with pagination");
 
-        Page<EvaluationAnalysis> analysisPage = evaluationAnalysisRepository.findAll(pageable);
+        Page<Object[]> analysisPage = evaluationAnalysisRepository.findAllAnalysisResultsWithDetails(pageable);
         
-        return analysisPage.map(this::convertToResponse);
+        return analysisPage.map(this::convertDetailedResultToResponse);
     }
 
     /**

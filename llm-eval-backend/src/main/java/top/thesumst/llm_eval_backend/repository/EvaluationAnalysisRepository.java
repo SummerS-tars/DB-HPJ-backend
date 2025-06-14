@@ -103,6 +103,17 @@ public interface EvaluationAnalysisRepository extends JpaRepository<EvaluationAn
     List<Object[]> findAnalysisResultsWithDetails(@Param("analysisTagId") Long analysisTagId);
 
     /**
+     * Get single analysis result with detailed information by ID
+     */
+    @Query("SELECT ea, at.model, er.evaluationTag.model, sq.id, sq.content " +
+           "FROM EvaluationAnalysis ea " +
+           "JOIN ea.analysisTag at " +
+           "JOIN ea.evaluationResult er " +
+           "JOIN er.standardQuestion sq " +
+           "WHERE ea.id = :id")
+    Optional<Object[]> findAnalysisResultWithDetailsById(@Param("id") Long id);
+
+    /**
      * Get analysis results with detailed information (paginated)
      */
     @Query("SELECT ea, at.model, er.evaluationTag.model, sq.id, sq.content " +
@@ -112,6 +123,16 @@ public interface EvaluationAnalysisRepository extends JpaRepository<EvaluationAn
            "JOIN er.standardQuestion sq " +
            "WHERE ea.analysisTagId = :analysisTagId")
     Page<Object[]> findAnalysisResultsWithDetails(@Param("analysisTagId") Long analysisTagId, Pageable pageable);
+
+    /**
+     * Get all analysis results with detailed information (paginated)
+     */
+    @Query("SELECT ea, at.model, er.evaluationTag.model, sq.id, sq.content " +
+           "FROM EvaluationAnalysis ea " +
+           "JOIN ea.analysisTag at " +
+           "JOIN ea.evaluationResult er " +
+           "JOIN er.standardQuestion sq")
+    Page<Object[]> findAllAnalysisResultsWithDetails(Pageable pageable);
 
     /**
      * Delete analysis results by analysis tag ID
