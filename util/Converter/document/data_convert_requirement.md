@@ -7,7 +7,7 @@ I need to convert the data about raw questions to the standard format
 1. the original data is in XML format, it should be converted to CSV format
 
 2. the original data has the following attributes:  
-    [reference](xml-converter\xml\problem.xml)
+    [reference](../../converter-data-set/qustion/xml/problem.xml)
     1. Id
     2. PostTypeId
     3. AcceptedAnswerId
@@ -28,7 +28,7 @@ I need to convert the data about raw questions to the standard format
 
 3. the standard format should be:
     *you should strictly follow the format below(including lowercase and sequence)*  
-    [reference](xml-converter\csv\problem.csv)
+    [reference](../../converter-data-set/qustion/csv/problem.csv)
     1. title(from Title)
     2. content(from Body)
     3. tags(from Tags)
