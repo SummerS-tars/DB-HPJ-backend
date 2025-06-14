@@ -36,6 +36,9 @@ public class CandidateAnswer {
     @Column(nullable = false)
     private CandidateAnswerStatus status = CandidateAnswerStatus.PENDING;
 
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
     // Many-to-one relationship with StandardQuestion
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "std_question_id", insertable = false, updatable = false)

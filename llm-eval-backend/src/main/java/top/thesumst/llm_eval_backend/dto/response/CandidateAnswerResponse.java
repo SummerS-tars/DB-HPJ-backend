@@ -41,4 +41,7 @@ public class CandidateAnswerResponse {
 
     @Schema(description = "Standard question title", example = "Basic Math")
     private String questionTitle;
+
+    @Schema(description = "Additional notes or comments about the answer", example = "High quality technical answer")
+    private String notes;
 } 

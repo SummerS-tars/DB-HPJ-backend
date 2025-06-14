@@ -42,6 +42,20 @@ public class CandidateAnswerService {
 
     /**
      * Import candidate answers from CSV file
+     * 
+     * CSV Format for OBJECTIVE questions:
+     * Header: std_question_id,obj_answer,notes
+     * Example: 1,A,Correct answer for multiple choice question
+     * Example: 2,TRUE,Correct answer for true/false question
+     * Note: obj_answer should be the CORRECT answer choice (A/B/C/D for multiple choice, TRUE/FALSE for boolean)
+     * 
+     * CSV Format for SUBJECTIVE questions:
+     * Header: std_question_id,sub_answer,notes
+     * Example: 5,"This is a comprehensive answer text",High quality answer
+     * 
+     * @param file CSV file containing candidate answers
+     * @param type Question type (OBJECTIVE or SUBJECTIVE)
+     * @return ImportResponse with import results and any errors
      */
     @Transactional
     public ImportResponse importCandidateAnswers(MultipartFile file, QuestionType type) {
@@ -145,6 +159,9 @@ public class CandidateAnswerService {
         candidateAnswer.setStatus(CandidateAnswerStatus.PENDING);
 
         candidateAnswer = candidateAnswerRepository.save(candidateAnswer);
+
+        // Set notes if provided
+        candidateAnswer.setNotes(request.getNotes());
 
         // Create answer content based on type
         if (type == QuestionType.OBJECTIVE) {
@@ -300,6 +317,7 @@ public class CandidateAnswerService {
         response.setType(candidateAnswer.getType());
         response.setStatus(candidateAnswer.getStatus());
         response.setCreatedAt(LocalDateTime.now()); // TODO: Add createdAt field to entity
+        response.setNotes(candidateAnswer.getNotes());
 
         // Set answer content based on type
         if (candidateAnswer.getType() == QuestionType.OBJECTIVE && 
