@@ -20,7 +20,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, exclude = {"tags", "versions", "candidateAnswers", "standardAnswers", "evaluationResults"})
 public class StandardQuestion {
 
     @Id
