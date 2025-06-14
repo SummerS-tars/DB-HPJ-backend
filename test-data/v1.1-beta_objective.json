@@ -1,0 +1,7 @@
+[ {
+  "id" : 2,
+  "content" : "Which of the following is the most effective method for automatically generating stack traces on Unix systems when a SIGSEGV occurs?\nA) Using gdb with core dumps\nB) Implementing a custom SIGSEGV handler\nC) Using valgrind for memory debugging\nD) Setting up system-wide crash reporters"
+}, {
+  "id" : 4,
+  "content" : "In Linux systems, gettimeofday() function:\nA) Always provides microsecond resolution\nB) Resolution depends on kernel compilation options\nC) Provides nanosecond resolution by default\nD) Resolution is hardware-dependent but consistent within the same system"
+} ]
