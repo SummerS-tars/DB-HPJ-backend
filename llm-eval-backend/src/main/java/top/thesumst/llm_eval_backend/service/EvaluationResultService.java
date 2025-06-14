@@ -25,6 +25,9 @@ import top.thesumst.llm_eval_backend.repository.EvaluationResultRepository;
 import top.thesumst.llm_eval_backend.repository.EvaluationTagRepository;
 import top.thesumst.llm_eval_backend.repository.StandardQuestionRepository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -42,9 +45,10 @@ public class EvaluationResultService {
     private final EvaluationTagRepository evaluationTagRepository;
     private final StandardQuestionRepository standardQuestionRepository;
     private final ModelMapper modelMapper;
+    private final ObjectMapper objectMapper;
 
     /**
-     * Import evaluation results from CSV file
+     * Import evaluation results from CSV or JSON file
      */
     @Transactional
     public ImportResponse importFromFile(MultipartFile file, Long evaluationTagId) {
@@ -60,9 +64,115 @@ public class EvaluationResultService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
                         "评估标签不存在，ID: " + evaluationTagId));
 
+        // Determine file format based on content
+        String filename = file.getOriginalFilename();
+        boolean isJsonFile = filename != null && filename.toLowerCase().endsWith(".json");
+        
+        if (isJsonFile) {
+            return importFromJsonFile(file, evaluationTagId);
+        } else {
+            return importFromCsvFile(file, evaluationTagId);
+        }
+    }
+
+    /**
+     * Import evaluation results from JSON file
+     */
+    private ImportResponse importFromJsonFile(MultipartFile file, Long evaluationTagId) {
+        log.info("Importing evaluation results from JSON file: {}", file.getOriginalFilename());
+        
         List<ImportResponse.ImportError> errors = new ArrayList<>();
         int importedCount = 0;
         int failedCount = 0;
+        int skippedCount = 0; // Track skipped duplicates
+
+        try {
+            String content = new String(file.getBytes());
+            JsonNode rootNode = objectMapper.readTree(content);
+            
+            // Handle different JSON structures
+            JsonNode answersNode = rootNode.get("answers");
+            if (answersNode == null) {
+                // Support direct array format
+                if (rootNode.isArray()) {
+                    answersNode = rootNode;
+                } else {
+                    throw new IllegalArgumentException("JSON文件格式无效：缺少 'answers' 数组或根节点不是数组");
+                }
+            }
+            
+            if (!answersNode.isArray()) {
+                throw new IllegalArgumentException("JSON文件格式无效：'answers' 必须是数组");
+            }
+
+            for (JsonNode answerNode : answersNode) {
+                try {
+                    EvaluationResultImportRequest request = parseJsonNode(answerNode, evaluationTagId);
+                    
+                    // Check for duplicate
+                    if (evaluationResultRepository.existsByEvaluationTagIdAndStdQuestionId(
+                            request.getEvaluationTagId(), request.getStdQuestionId())) {
+                        log.warn("Duplicate evaluation result found: tagId={}, questionId={}", 
+                                request.getEvaluationTagId(), request.getStdQuestionId());
+                        skippedCount++;
+                        errors.add(ImportResponse.ImportError.builder()
+                                .originalRecord(answerNode.toString())
+                                .error("重复记录：评估标签ID " + request.getEvaluationTagId() + 
+                                      " 和问题ID " + request.getStdQuestionId() + " 的组合已存在")
+                                .build());
+                        continue;
+                    }
+
+                    // Validate standard question exists
+                    if (!standardQuestionRepository.existsById(request.getStdQuestionId())) {
+                        throw new IllegalArgumentException("标准问题不存在，ID: " + request.getStdQuestionId());
+                    }
+
+                    EvaluationResult result = modelMapper.map(request, EvaluationResult.class);
+                    evaluationResultRepository.save(result);
+                    importedCount++;
+                    
+                } catch (Exception e) {
+                    log.error("Failed to process JSON node: {}", answerNode.toString(), e);
+                    errors.add(ImportResponse.ImportError.builder()
+                            .originalRecord(answerNode.toString())
+                            .error(e.getMessage())
+                            .build());
+                    failedCount++;
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to parse JSON file", e);
+            throw new BusinessException(ErrorCode.IMPORT_PARSE_ERROR, "JSON文件解析失败: " + e.getMessage());
+        }
+
+        log.info("JSON import completed. Imported: {}, Failed: {}, Skipped: {}", importedCount, failedCount, skippedCount);
+        
+        // Enhanced message with duplicate information
+        String message = "评估结果导入完成";
+        if (skippedCount > 0) {
+            message += "，跳过 " + skippedCount + " 条重复记录";
+        }
+        
+        return ImportResponse.builder()
+                .message(message)
+                .importedCount(importedCount)
+                .failedCount(failedCount + skippedCount) // Include skipped as failed for clarity
+                .errors(errors.isEmpty() ? null : errors)
+                .build();
+    }
+
+    /**
+     * Import evaluation results from CSV file
+     */
+    private ImportResponse importFromCsvFile(MultipartFile file, Long evaluationTagId) {
+        log.info("Importing evaluation results from CSV file: {}", file.getOriginalFilename());
+        
+        List<ImportResponse.ImportError> errors = new ArrayList<>();
+        int importedCount = 0;
+        int failedCount = 0;
+        int skippedCount = 0; // Track skipped duplicates
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
@@ -83,6 +193,12 @@ public class EvaluationResultService {
                             request.getEvaluationTagId(), request.getStdQuestionId())) {
                         log.warn("Duplicate evaluation result found: tagId={}, questionId={}", 
                                 request.getEvaluationTagId(), request.getStdQuestionId());
+                        skippedCount++;
+                        errors.add(ImportResponse.ImportError.builder()
+                                .originalRecord(line)
+                                .error("重复记录：评估标签ID " + request.getEvaluationTagId() + 
+                                      " 和问题ID " + request.getStdQuestionId() + " 的组合已存在")
+                                .build());
                         continue;
                     }
 
@@ -105,18 +221,74 @@ public class EvaluationResultService {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to read import file", e);
-            throw new BusinessException(ErrorCode.IMPORT_PARSE_ERROR, "文件解析失败: " + e.getMessage());
+            log.error("Failed to read CSV file", e);
+            throw new BusinessException(ErrorCode.IMPORT_PARSE_ERROR, "CSV文件解析失败: " + e.getMessage());
         }
 
-        log.info("Import completed. Imported: {}, Failed: {}", importedCount, failedCount);
+        log.info("CSV import completed. Imported: {}, Failed: {}, Skipped: {}", importedCount, failedCount, skippedCount);
+        
+        // Enhanced message with duplicate information
+        String message = "评估结果导入完成";
+        if (skippedCount > 0) {
+            message += "，跳过 " + skippedCount + " 条重复记录";
+        }
         
         return ImportResponse.builder()
-                .message("评估结果导入成功")
+                .message(message)
                 .importedCount(importedCount)
-                .failedCount(failedCount)
+                .failedCount(failedCount + skippedCount) // Include skipped as failed for clarity
                 .errors(errors.isEmpty() ? null : errors)
                 .build();
+    }
+
+    /**
+     * Parse JSON node to EvaluationResultImportRequest
+     */
+    private EvaluationResultImportRequest parseJsonNode(JsonNode node, Long evaluationTagId) {
+        EvaluationResultImportRequest request = new EvaluationResultImportRequest();
+        request.setEvaluationTagId(evaluationTagId);
+        
+        // Parse std_question_id
+        JsonNode stdQuestionIdNode = node.get("std_question_id");
+        if (stdQuestionIdNode == null || !stdQuestionIdNode.isNumber()) {
+            throw new IllegalArgumentException("JSON节点缺少有效的 'std_question_id' 字段");
+        }
+        request.setStdQuestionId(stdQuestionIdNode.asLong());
+        
+        // Parse content
+        JsonNode contentNode = node.get("content");
+        if (contentNode == null || !contentNode.isTextual()) {
+            throw new IllegalArgumentException("JSON节点缺少有效的 'content' 字段");
+        }
+        request.setContent(contentNode.asText());
+        
+        // Parse type (optional, default to SUBJECTIVE)
+        JsonNode typeNode = node.get("type");
+        if (typeNode != null && typeNode.isTextual()) {
+            try {
+                request.setType(QuestionType.valueOf(typeNode.asText().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid question type: {}, defaulting to SUBJECTIVE", typeNode.asText());
+                request.setType(QuestionType.SUBJECTIVE);
+            }
+        } else {
+            request.setType(QuestionType.SUBJECTIVE);
+        }
+        
+        // Parse status (optional, default to PENDING)
+        JsonNode statusNode = node.get("status");
+        if (statusNode != null && statusNode.isTextual()) {
+            try {
+                request.setStatus(EvaluationResultStatus.valueOf(statusNode.asText().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status: {}, defaulting to PENDING", statusNode.asText());
+                request.setStatus(EvaluationResultStatus.PENDING);
+            }
+        } else {
+            request.setStatus(EvaluationResultStatus.PENDING);
+        }
+        
+        return request;
     }
 
     /**
@@ -147,6 +319,12 @@ public class EvaluationResultService {
                         request.getEvaluationTagId(), request.getStdQuestionId())) {
                     log.warn("Duplicate evaluation result found: tagId={}, questionId={}", 
                             request.getEvaluationTagId(), request.getStdQuestionId());
+                    errors.add(ImportResponse.ImportError.builder()
+                            .originalRecord(request.toString())
+                            .error("重复记录：评估标签ID " + request.getEvaluationTagId() + 
+                                  " 和问题ID " + request.getStdQuestionId() + " 的组合已存在")
+                            .build());
+                    failedCount++;
                     continue;
                 }
 

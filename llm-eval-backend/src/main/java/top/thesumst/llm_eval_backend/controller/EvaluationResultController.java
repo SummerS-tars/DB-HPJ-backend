@@ -38,7 +38,9 @@ public class EvaluationResultController {
 
     private final EvaluationResultService evaluationResultService;
 
-    @Operation(summary = "导入评估结果", description = "从CSV文件批量导入评估结果")
+    @Operation(summary = "导入评估结果", description = "从CSV或JSON文件批量导入评估结果。支持的格式：\n" +
+            "CSV格式：std_question_id,content,type,status\n" +
+            "JSON格式：{\"answers\": [{\"std_question_id\": 1, \"content\": \"...\", \"type\": \"SUBJECTIVE\", \"status\": \"PENDING\"}]}")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "导入成功",
                 content = @Content(schema = @Schema(implementation = ImportResponse.class))),
@@ -48,7 +50,7 @@ public class EvaluationResultController {
     })
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<top.thesumst.llm_eval_backend.dto.response.ApiResponse<ImportResponse>> importEvaluationResults(
-            @Parameter(description = "CSV文件", required = true)
+            @Parameter(description = "CSV或JSON文件", required = true)
             @RequestParam("file") MultipartFile file,
             @Parameter(description = "评估标签ID", required = true)
             @RequestParam("evaluationTagId") Long evaluationTagId) {
