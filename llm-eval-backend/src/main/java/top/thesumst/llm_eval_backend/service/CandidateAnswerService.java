@@ -104,9 +104,11 @@ public class CandidateAnswerService {
 
     /**
      * Parse CSV line into import request
+     * Handles CSV fields with commas properly by respecting quoted fields
      */
     private CandidateAnswerImportRequest parseCsvLine(String line, QuestionType type, int lineNumber) {
-        String[] fields = line.split(",", -1);
+        // Use regex to split CSV line while respecting quoted fields
+        String[] fields = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1);
         
         if (fields.length < 2) {
             throw new BusinessException(ErrorCode.IMPORT_DATA_INVALID, "CSV格式错误，至少需要2列");
@@ -115,16 +117,16 @@ public class CandidateAnswerService {
         CandidateAnswerImportRequest request = new CandidateAnswerImportRequest();
         
         try {
-            request.setStdQuestionId(Long.parseLong(fields[0].trim()));
+            request.setStdQuestionId(Long.parseLong(cleanCsvField(fields[0])));
             
             if (type == QuestionType.OBJECTIVE) {
-                request.setObjAnswer(ObjectiveAnswer.valueOf(fields[1].trim().toUpperCase()));
+                request.setObjAnswer(ObjectiveAnswer.valueOf(cleanCsvField(fields[1]).toUpperCase()));
             } else {
-                request.setSubAnswer(fields[1].trim());
+                request.setSubAnswer(cleanCsvField(fields[1]));
             }
             
             if (fields.length > 2) {
-                request.setNotes(fields[2].trim());
+                request.setNotes(cleanCsvField(fields[2]));
             }
             
         } catch (NumberFormatException e) {
@@ -134,6 +136,25 @@ public class CandidateAnswerService {
         }
 
         return request;
+    }
+
+    /**
+     * Clean CSV field by removing quotes and trimming whitespace
+     * Handles quoted fields that may contain commas
+     */
+    private String cleanCsvField(String field) {
+        if (field == null) return null;
+        
+        field = field.trim();
+        
+        // Remove surrounding quotes if present
+        if (field.startsWith("\"") && field.endsWith("\"") && field.length() > 1) {
+            field = field.substring(1, field.length() - 1);
+            // Handle escaped quotes within the field (double quotes become single quotes)
+            field = field.replace("\"\"", "\"");
+        }
+        
+        return field.isEmpty() ? null : field;
     }
 
     /**

@@ -117,6 +117,24 @@ public class CandidateAnswerController {
     }
 
     /**
+     * Update candidate answer (partial update - typically for status changes)
+     */
+    @PatchMapping("/{id}")
+    @Operation(summary = "更新候选答案", description = "部分更新候选答案信息（通常用于状态变更）")
+    public ResponseEntity<ApiResponse<CandidateAnswerResponse>> patchCandidateAnswer(
+            @Parameter(description = "候选答案ID", required = true)
+            @PathVariable Long id,
+            @Parameter(description = "状态更新请求", required = true)
+            @Valid @RequestBody CandidateAnswerStatusUpdateRequest request) {
+        
+        log.info("Patching candidate answer {} with status {}", id, request.getStatus());
+        
+        CandidateAnswerResponse result = candidateAnswerService.updateStatus(id, request);
+        
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
      * Get candidate answer statistics
      */
     @GetMapping("/statistics")
