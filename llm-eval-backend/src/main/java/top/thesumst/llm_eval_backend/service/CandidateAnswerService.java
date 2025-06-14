@@ -39,6 +39,7 @@ public class CandidateAnswerService {
 
     private final CandidateAnswerRepository candidateAnswerRepository;
     private final StandardQuestionRepository standardQuestionRepository;
+    private final StandardAnswerService standardAnswerService;
 
     /**
      * Import candidate answers from CSV file
@@ -255,14 +256,38 @@ public class CandidateAnswerService {
      */
     @Transactional
     public CandidateAnswerResponse updateStatus(Long id, CandidateAnswerStatusUpdateRequest request) {
-        CandidateAnswer candidateAnswer = candidateAnswerRepository.findById(id)
+        CandidateAnswer candidateAnswer = candidateAnswerRepository.findWithContentById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "候选答案不存在"));
 
+        CandidateAnswerStatus oldStatus = candidateAnswer.getStatus();
         candidateAnswer.setStatus(request.getStatus());
         candidateAnswer = candidateAnswerRepository.save(candidateAnswer);
 
-        log.info("Updated candidate answer {} status to {}, reason: {}", 
-                id, request.getStatus(), request.getReason());
+        log.info("Updated candidate answer {} status from {} to {}, reason: {}", 
+                id, oldStatus, request.getStatus(), request.getReason());
+
+        // Automatically create standard answer when accepting candidate answer
+        if (request.getStatus() == CandidateAnswerStatus.ACCEPTED && 
+            oldStatus != CandidateAnswerStatus.ACCEPTED &&
+            Boolean.TRUE.equals(request.getCreateStandardAnswer())) {
+            
+            try {
+                // Check if standard answer already exists for this candidate answer
+                if (!standardAnswerService.existsBySelectedFromCandidateId(id)) {
+                    Integer score = request.getScore() != null ? request.getScore() : 8; // Default score
+                    standardAnswerService.createFromCandidateAnswerId(id, score);
+                    log.info("Automatically created standard answer from accepted candidate answer {} with score {}", 
+                            id, score);
+                } else {
+                    log.info("Standard answer already exists for candidate answer {}, skipping creation", id);
+                }
+            } catch (Exception e) {
+                log.error("Failed to automatically create standard answer from candidate answer {}: {}", 
+                        id, e.getMessage());
+                // Don't fail the status update if standard answer creation fails
+                // This allows the user to manually create the standard answer later
+            }
+        }
 
         return convertToResponse(candidateAnswer);
     }

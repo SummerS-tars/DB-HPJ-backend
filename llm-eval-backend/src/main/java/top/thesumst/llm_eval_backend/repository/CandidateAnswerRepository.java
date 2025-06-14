@@ -11,6 +11,7 @@ import top.thesumst.llm_eval_backend.entity.enums.CandidateAnswerStatus;
 import top.thesumst.llm_eval_backend.entity.enums.QuestionType;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for CandidateAnswer entity
@@ -104,6 +105,16 @@ public interface CandidateAnswerRepository extends JpaRepository<CandidateAnswer
            "LEFT JOIN FETCH ca.standardQuestion " +
            "WHERE ca.stdQuestionId = :stdQuestionId")
     List<CandidateAnswer> findWithContentByStdQuestionId(@Param("stdQuestionId") Long stdQuestionId);
+
+    /**
+     * Find candidate answer with content by ID
+     */
+    @Query("SELECT ca FROM CandidateAnswer ca " +
+           "LEFT JOIN FETCH ca.candidateAnswerObj " +
+           "LEFT JOIN FETCH ca.candidateAnswerSub " +
+           "LEFT JOIN FETCH ca.standardQuestion " +
+           "WHERE ca.id = :id")
+    Optional<CandidateAnswer> findWithContentById(@Param("id") Long id);
 
     /**
      * Get statistics by status
