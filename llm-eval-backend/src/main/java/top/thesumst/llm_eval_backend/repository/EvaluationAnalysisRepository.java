@@ -94,7 +94,7 @@ public interface EvaluationAnalysisRepository extends JpaRepository<EvaluationAn
     /**
      * Get analysis results with detailed information
      */
-    @Query("SELECT ea, at.model, er.model, sq.standardQuestionId, sq.title " +
+    @Query("SELECT ea, at.model, er.evaluationTag.model, sq.id, sq.content " +
            "FROM EvaluationAnalysis ea " +
            "JOIN ea.analysisTag at " +
            "JOIN ea.evaluationResult er " +
@@ -105,7 +105,7 @@ public interface EvaluationAnalysisRepository extends JpaRepository<EvaluationAn
     /**
      * Get analysis results with detailed information (paginated)
      */
-    @Query("SELECT ea, at.model, er.model, sq.standardQuestionId, sq.title " +
+    @Query("SELECT ea, at.model, er.evaluationTag.model, sq.id, sq.content " +
            "FROM EvaluationAnalysis ea " +
            "JOIN ea.analysisTag at " +
            "JOIN ea.evaluationResult er " +

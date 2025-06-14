@@ -24,5 +24,5 @@ public class EvaluationAnalysisResponse {
     private String analysisModel;
     private String evaluationModel;
     private Long standardQuestionId;
-    private String standardQuestionTitle;
+    private String standardQuestionContent;
 } 

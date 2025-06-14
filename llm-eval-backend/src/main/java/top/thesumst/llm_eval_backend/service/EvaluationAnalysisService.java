@@ -289,13 +289,13 @@ public class EvaluationAnalysisService {
         String analysisModel = (String) row[1];
         String evaluationModel = (String) row[2];
         Long standardQuestionId = (Long) row[3];
-        String standardQuestionTitle = (String) row[4];
+        String standardQuestionContent = (String) row[4];
 
         EvaluationAnalysisResponse response = modelMapper.map(analysis, EvaluationAnalysisResponse.class);
         response.setAnalysisModel(analysisModel);
         response.setEvaluationModel(evaluationModel);
         response.setStandardQuestionId(standardQuestionId);
-        response.setStandardQuestionTitle(standardQuestionTitle);
+        response.setStandardQuestionContent(standardQuestionContent);
 
         return response;
     }
