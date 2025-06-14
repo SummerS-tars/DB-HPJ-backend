@@ -10,6 +10,8 @@ import top.thesumst.llm_eval_backend.entity.StandardQuestion;
 import top.thesumst.llm_eval_backend.entity.enums.QuestionType;
 import top.thesumst.llm_eval_backend.entity.enums.StandardQuestionStatus;
 
+import java.util.Optional;
+
 /**
  * Repository interface for StandardQuestion entity
  */
@@ -34,27 +36,38 @@ public interface StandardQuestionRepository extends JpaRepository<StandardQuesti
     /**
      * Find standard questions by version
      */
-    @Query("SELECT sq FROM StandardQuestion sq JOIN sq.versions v WHERE v.version = :version")
+    @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
+           "JOIN FETCH sq.versions v " +
+           "LEFT JOIN FETCH sq.tags " +
+           "WHERE v.version = :version")
     Page<StandardQuestion> findByVersion(@Param("version") String version, Pageable pageable);
 
     /**
      * Find standard questions by tag
      */
-    @Query("SELECT sq FROM StandardQuestion sq JOIN sq.tags t WHERE t.tag = :tag")
+    @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
+           "JOIN FETCH sq.tags t " +
+           "LEFT JOIN FETCH sq.versions " +
+           "WHERE t.tag = :tag")
     Page<StandardQuestion> findByTag(@Param("tag") String tag, Pageable pageable);
 
     /**
      * Find standard questions by multiple tags (containing all tags)
      */
-    @Query("SELECT sq FROM StandardQuestion sq JOIN sq.tags t WHERE t.tag IN :tags GROUP BY sq HAVING COUNT(DISTINCT t.tag) = :tagCount")
+    @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
+           "JOIN FETCH sq.tags t " +
+           "LEFT JOIN FETCH sq.versions " +
+           "WHERE t.tag IN :tags " +
+           "GROUP BY sq " +
+           "HAVING COUNT(DISTINCT t.tag) = :tagCount")
     Page<StandardQuestion> findByAllTags(@Param("tags") String[] tags, @Param("tagCount") long tagCount, Pageable pageable);
 
     /**
      * Complex query with multiple filters
      */
     @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
-           "LEFT JOIN sq.versions v " +
-           "LEFT JOIN sq.tags t " +
+           "LEFT JOIN FETCH sq.versions v " +
+           "LEFT JOIN FETCH sq.tags t " +
            "WHERE (:type IS NULL OR sq.type = :type) " +
            "AND (:status IS NULL OR sq.status = :status) " +
            "AND (:version IS NULL OR v.version = :version) " +
@@ -81,4 +94,13 @@ public interface StandardQuestionRepository extends JpaRepository<StandardQuesti
      * Count standard questions by type
      */
     long countByType(QuestionType type);
+
+    /**
+     * Find standard question by ID with all relationships
+     */
+    @Query("SELECT DISTINCT sq FROM StandardQuestion sq " +
+           "LEFT JOIN FETCH sq.versions " +
+           "LEFT JOIN FETCH sq.tags " +
+           "WHERE sq.id = :id")
+    Optional<StandardQuestion> findByIdWithRelationships(@Param("id") Long id);
 } 

@@ -93,6 +93,14 @@ public class StandardQuestionService {
                 }
 
                 standardQuestionRepository.save(question);
+                
+                // Update raw question status to CONVERTED
+                rawQuestionRepository.findById(request.getOriginalRawQuestionId())
+                    .ifPresent(rawQuestion -> {
+                        rawQuestion.setStatus(top.thesumst.llm_eval_backend.entity.enums.RawQuestionStatus.CONVERTED);
+                        rawQuestionRepository.save(rawQuestion);
+                    });
+                
                 importedCount++;
 
             } catch (Exception e) {
@@ -152,7 +160,7 @@ public class StandardQuestionService {
      * Get standard question by ID
      */
     public StandardQuestionResponse getStandardQuestionById(Long id) {
-        StandardQuestion question = standardQuestionRepository.findById(id)
+        StandardQuestion question = standardQuestionRepository.findByIdWithRelationships(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
                         "标准问题不存在，ID: " + id));
         
