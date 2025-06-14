@@ -1,0 +1,37 @@
+[
+    {
+      "originalRawQuestionId": 21,
+      "type": "SUBJECTIVE",
+      "content": "Analyze the security implications and effectiveness of using SSH on port 443 for bypassing traffic shaping. Discuss the potential risks and better alternatives.",
+      "versionIds": ["v1.0"],
+      "tagNames": ["Security", "SSH", "Network"]
+    },
+    {
+      "originalRawQuestionId": 22,
+      "type": "OBJECTIVE", 
+      "content": "Which of the following is the most effective method for automatically generating stack traces on Unix systems when a SIGSEGV occurs?\nA) Using gdb with core dumps\nB) Implementing a custom SIGSEGV handler\nC) Using valgrind for memory debugging\nD) Setting up system-wide crash reporters",
+      "versionIds": ["v1.0", "v1.1-beta"],
+      "tagNames": ["Unix", "Debugging", "System Programming"]
+    },
+    {
+      "originalRawQuestionId": 23,
+      "type": "SUBJECTIVE",
+      "content": "Evaluate the available options for migrating VB.NET applications to Linux platforms. Compare different approaches and recommend the best strategy.",
+      "versionIds": ["v1.0"],
+      "tagNames": ["Migration", "VB.NET", "Linux"]
+    },
+    {
+      "originalRawQuestionId": 24,
+      "type": "OBJECTIVE",
+      "content": "In Linux systems, gettimeofday() function:\nA) Always provides microsecond resolution\nB) Resolution depends on kernel compilation options\nC) Provides nanosecond resolution by default\nD) Resolution is hardware-dependent but consistent within the same system",
+      "versionIds": ["v1.1-beta"],
+      "tagNames": ["Linux", "System Programming", "Time"]
+    },
+    {
+      "originalRawQuestionId": 25,
+      "type": "SUBJECTIVE",
+      "content": "Design and explain the architecture for setting up a secure OpenID provider on Ubuntu. Include security considerations and implementation steps.",
+      "versionIds": ["v1.0"],
+      "tagNames": ["Ubuntu", "Security", "Authentication", "OpenID"]
+    }
+  ]
