@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import top.thesumst.llm_eval_backend.dto.request.StandardQuestionImportRequest;
@@ -150,6 +152,37 @@ public class StandardQuestionController {
         StandardQuestionResponse result = standardQuestionService.removeTagFromQuestion(id, tagName);
         
         return ResponseEntity.ok(top.thesumst.llm_eval_backend.dto.response.ApiResponse.success(result));
+    }
+
+    @Operation(summary = "导出标准问题", description = "按版本、类型和可选标签导出标准问题为JSON文件")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "导出成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数无效"),
+        @ApiResponse(responseCode = "404", description = "未找到符合条件的问题")
+    })
+    @GetMapping("/export")
+    public ResponseEntity<String> exportStandardQuestions(
+            @Parameter(description = "问题类型", required = true)
+            @RequestParam QuestionType type,
+            
+            @Parameter(description = "版本", required = true)
+            @RequestParam String version,
+            
+            @Parameter(description = "标签（可选）", required = false)
+            @RequestParam(required = false) String tag) {
+        
+        log.info("Exporting standard questions - type: {}, version: {}, tag: {}", type, version, tag);
+        
+        String jsonContent = standardQuestionService.exportStandardQuestions(version, type, tag);
+        String filename = standardQuestionService.generateExportFilename(version, type, tag);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentDispositionFormData("attachment", filename);
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(jsonContent);
     }
 }
 

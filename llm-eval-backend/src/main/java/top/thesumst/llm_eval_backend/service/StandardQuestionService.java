@@ -13,6 +13,7 @@ import top.thesumst.llm_eval_backend.dto.request.StandardQuestionImportRequest;
 import top.thesumst.llm_eval_backend.dto.request.TagAddRequest;
 import top.thesumst.llm_eval_backend.dto.response.ImportResponse;
 import top.thesumst.llm_eval_backend.dto.response.StandardQuestionResponse;
+import top.thesumst.llm_eval_backend.dto.response.StandardQuestionExportResponse;
 import top.thesumst.llm_eval_backend.entity.StandardQuestion;
 import top.thesumst.llm_eval_backend.entity.Tag;
 import top.thesumst.llm_eval_backend.entity.Version;
@@ -24,6 +25,7 @@ import top.thesumst.llm_eval_backend.repository.RawQuestionRepository;
 import top.thesumst.llm_eval_backend.repository.StandardQuestionRepository;
 import top.thesumst.llm_eval_backend.repository.TagRepository;
 import top.thesumst.llm_eval_backend.repository.VersionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -267,5 +269,42 @@ public class StandardQuestionService {
         log.info("Updated standard question status: id={}, status={}", id, status);
         
         return modelMapper.map(savedQuestion, StandardQuestionResponse.class);
+    }
+
+    /**
+     * Export standard questions to JSON format by version, type, and optional tag
+     */
+    public String exportStandardQuestions(String version, QuestionType type, String tag) {
+        log.info("Exporting standard questions - version: {}, type: {}, tag: {}", version, type, tag);
+
+        // Query standard questions by version, type, and optionally tag
+        List<StandardQuestion> questions = standardQuestionRepository.findByFilters(
+                type, null, version, null, tag, 
+                PageRequest.of(0, Integer.MAX_VALUE)).getContent();
+
+        // Convert to export format
+        List<StandardQuestionExportResponse> exportQuestions = questions.stream()
+                .map(question -> new StandardQuestionExportResponse(question.getId(), question.getContent()))
+                .collect(Collectors.toList());
+
+        // Convert to JSON string
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportQuestions);
+        } catch (Exception e) {
+            log.error("Failed to export standard questions to JSON", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "导出失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate export filename with version, type, and optional tag
+     */
+    public String generateExportFilename(String version, QuestionType type, String tag) {
+        if (tag != null && !tag.trim().isEmpty()) {
+            return String.format("%s_%s_%s.json", version, type.name().toLowerCase(), tag);
+        } else {
+            return String.format("%s_%s.json", version, type.name().toLowerCase());
+        }
     }
 } 
