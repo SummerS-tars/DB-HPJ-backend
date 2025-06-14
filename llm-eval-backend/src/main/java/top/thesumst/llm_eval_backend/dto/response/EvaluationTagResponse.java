@@ -1,6 +1,7 @@
 package top.thesumst.llm_eval_backend.dto.response;
 
 import lombok.Data;
+import java.time.LocalDateTime;
 
 /**
  * DTO for evaluation tag response
@@ -12,6 +13,7 @@ public class EvaluationTagResponse {
     private String dataSetVersion;
     private Integer evaluationTime;
     private String model;
+    private LocalDateTime createdAt;
     
     // Additional fields for response
     private Long resultCount;

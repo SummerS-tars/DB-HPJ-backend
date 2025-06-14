@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -32,6 +33,9 @@ public class EvaluationTag {
 
     @Column(nullable = false, length = 100)
     private String model;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // Many-to-one relationship with Version
     @ManyToOne(fetch = FetchType.LAZY)
