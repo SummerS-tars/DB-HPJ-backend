@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS std_answers (
     type ENUM('OBJECTIVE', 'SUBJECTIVE') NOT NULL,
     score INT, -- 评分，整数，范围 0-10
     status ENUM('ACCEPTED', 'OMITTED') DEFAULT 'ACCEPTED', -- 答案状态
+    notes TEXT, -- 备注
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     selected_from_candidate_id BIGINT NOT NULL,
     FOREIGN KEY (std_question_id) REFERENCES std_questions(id) ON DELETE CASCADE,
