@@ -44,6 +44,9 @@ public class StandardAnswer {
     @Column(name = "selected_from_candidate_id", nullable = false)
     private Long selectedFromCandidateId;
 
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
     // Many-to-one relationship with StandardQuestion
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "std_question_id", insertable = false, updatable = false)

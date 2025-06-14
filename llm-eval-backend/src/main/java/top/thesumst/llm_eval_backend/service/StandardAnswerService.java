@@ -72,6 +72,8 @@ public class StandardAnswerService {
         standardAnswer.setScore(request.getScore());
         standardAnswer.setStatus(StandardAnswerStatus.ACCEPTED);
         standardAnswer.setCreatedAt(LocalDateTime.now());
+        // Set notes: prioritize notes from request, fallback to candidate answer notes
+        standardAnswer.setNotes(request.getNotes() != null ? request.getNotes() : candidateAnswer.getNotes());
 
         standardAnswer = standardAnswerRepository.save(standardAnswer);
 
@@ -92,8 +94,9 @@ public class StandardAnswerService {
 
         standardAnswer = standardAnswerRepository.save(standardAnswer);
 
-        log.info("Created standard answer {} from candidate answer {}", 
-                standardAnswer.getId(), request.getCandidateAnswerId());
+        log.info("Created standard answer {} from candidate answer {} with score {} and notes: {}", 
+                standardAnswer.getId(), request.getCandidateAnswerId(), request.getScore(), 
+                standardAnswer.getNotes());
 
         return convertToResponse(standardAnswer);
     }
@@ -172,11 +175,14 @@ public class StandardAnswerService {
         if (request.getScore() != null) {
             standardAnswer.setScore(request.getScore());
         }
+        if (request.getNotes() != null) {
+            standardAnswer.setNotes(request.getNotes());
+        }
 
         standardAnswer = standardAnswerRepository.save(standardAnswer);
 
-        log.info("Updated standard answer {} - status: {}, score: {}", 
-                id, request.getStatus(), request.getScore());
+        log.info("Updated standard answer {} - status: {}, score: {}, notes: {}", 
+                id, request.getStatus(), request.getScore(), request.getNotes());
 
         return convertToResponse(standardAnswer);
     }
