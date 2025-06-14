@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS candidate_answers (
     std_question_id INT NOT NULL, -- 外键，实现 candidate_a_of_std_q 关系
     type ENUM('OBJECTIVE', 'SUBJECTIVE') NOT NULL,
     status ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING',
+    notes TEXT COMMENT 'Additional notes or comments about the answer quality, reasoning, or categorization',
     -- submitted_by_user_id INT, -- 考虑未来扩展
     -- submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 考虑未来扩展
     FOREIGN KEY (std_question_id) REFERENCES std_questions(id) ON DELETE CASCADE
