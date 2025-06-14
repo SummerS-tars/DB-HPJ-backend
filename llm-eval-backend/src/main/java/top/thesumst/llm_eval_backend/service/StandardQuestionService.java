@@ -14,7 +14,9 @@ import top.thesumst.llm_eval_backend.dto.request.TagAddRequest;
 import top.thesumst.llm_eval_backend.dto.response.ImportResponse;
 import top.thesumst.llm_eval_backend.dto.response.StandardQuestionResponse;
 import top.thesumst.llm_eval_backend.dto.response.StandardQuestionExportResponse;
+import top.thesumst.llm_eval_backend.dto.response.StandardQuestionAnswerExportResponse;
 import top.thesumst.llm_eval_backend.entity.StandardQuestion;
+import top.thesumst.llm_eval_backend.entity.StandardAnswer;
 import top.thesumst.llm_eval_backend.entity.Tag;
 import top.thesumst.llm_eval_backend.entity.Version;
 import top.thesumst.llm_eval_backend.entity.enums.QuestionType;
@@ -306,5 +308,95 @@ public class StandardQuestionService {
         } else {
             return String.format("%s_%s.json", version, type.name().toLowerCase());
         }
+    }
+
+    /**
+     * Export standard questions with their answers
+     */
+    public String exportStandardQuestionsWithAnswers(String version, QuestionType type, String tag) {
+        log.info("Exporting standard questions with answers - version: {}, type: {}, tag: {}", version, type, tag);
+
+        // Query standard questions with their answers
+        List<StandardQuestion> questions = standardQuestionRepository.findQuestionsWithAnswersForExport(type, version, tag);
+
+        if (questions.isEmpty()) {
+            log.warn("No standard questions with answers found for export criteria");
+            throw new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, 
+                    "未找到符合条件的标准问题和答案");
+        }
+
+        // Convert to export format
+        List<StandardQuestionAnswerExportResponse.QuestionAnswerPair> questionAnswerPairs = questions.stream()
+                .map(this::convertToQuestionAnswerPair)
+                .collect(Collectors.toList());
+
+        // Create export response
+        StandardQuestionAnswerExportResponse exportResponse = new StandardQuestionAnswerExportResponse();
+        exportResponse.setVersion(version);
+        exportResponse.setType(type.name().toLowerCase());
+        exportResponse.setNumber(questionAnswerPairs.size());
+        exportResponse.setQuestionAnswerPairs(questionAnswerPairs);
+
+        // Convert to JSON string
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportResponse);
+        } catch (Exception e) {
+            log.error("Failed to export standard questions with answers to JSON", e);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "导出失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate export filename for questions with answers
+     */
+    public String generateQAExportFilename(String version, QuestionType type, String tag) {
+        if (tag != null && !tag.trim().isEmpty()) {
+            return String.format("%s_%s_%s_std_q_a.json", version, type.name().toLowerCase(), tag);
+        } else {
+            return String.format("%s_%s_std_q_a.json", version, type.name().toLowerCase());
+        }
+    }
+
+    /**
+     * Convert StandardQuestion to QuestionAnswerPair
+     */
+    private StandardQuestionAnswerExportResponse.QuestionAnswerPair convertToQuestionAnswerPair(StandardQuestion question) {
+        // Create question info
+        StandardQuestionAnswerExportResponse.QuestionInfo questionInfo = 
+                new StandardQuestionAnswerExportResponse.QuestionInfo(question.getId(), question.getContent());
+
+        // Create answer info list
+        List<StandardQuestionAnswerExportResponse.AnswerInfo> answerInfos = question.getStandardAnswers().stream()
+                .filter(answer -> answer.getStatus().name().equals("ACCEPTED")) // Only accepted answers
+                .map(this::convertToAnswerInfo)
+                .collect(Collectors.toList());
+
+        return new StandardQuestionAnswerExportResponse.QuestionAnswerPair(questionInfo, answerInfos);
+    }
+
+    /**
+     * Convert StandardAnswer to AnswerInfo
+     */
+    private StandardQuestionAnswerExportResponse.AnswerInfo convertToAnswerInfo(StandardAnswer answer) {
+        String content;
+        
+        if (answer.getType() == QuestionType.OBJECTIVE) {
+            // For objective questions, get the answer from StandardAnswerObj
+            if (answer.getStandardAnswerObj() != null) {
+                content = answer.getStandardAnswerObj().getObjAnswer().name(); // A, B, C, D
+            } else {
+                content = "N/A";
+            }
+        } else {
+            // For subjective questions, get the answer from StandardAnswerSub
+            if (answer.getStandardAnswerSub() != null) {
+                content = answer.getStandardAnswerSub().getSubAnswer();
+            } else {
+                content = "N/A";
+            }
+        }
+
+        return new StandardQuestionAnswerExportResponse.AnswerInfo(answer.getId(), content);
     }
 } 

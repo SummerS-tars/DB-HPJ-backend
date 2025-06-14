@@ -184,6 +184,37 @@ public class StandardQuestionController {
                 .headers(headers)
                 .body(jsonContent);
     }
+
+    @Operation(summary = "导出标准问题和答案", description = "按版本、类型和可选标签导出标准问题及其对应答案为JSON文件")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "导出成功"),
+        @ApiResponse(responseCode = "400", description = "请求参数无效"),
+        @ApiResponse(responseCode = "404", description = "未找到符合条件的问题和答案")
+    })
+    @GetMapping("/export-with-answers")
+    public ResponseEntity<String> exportStandardQuestionsWithAnswers(
+            @Parameter(description = "问题类型", required = true)
+            @RequestParam QuestionType type,
+            
+            @Parameter(description = "版本", required = true)
+            @RequestParam String version,
+            
+            @Parameter(description = "标签（可选）", required = false)
+            @RequestParam(required = false) String tag) {
+        
+        log.info("Exporting standard questions with answers - type: {}, version: {}, tag: {}", type, version, tag);
+        
+        String jsonContent = standardQuestionService.exportStandardQuestionsWithAnswers(version, type, tag);
+        String filename = standardQuestionService.generateQAExportFilename(version, type, tag);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentDispositionFormData("attachment", filename);
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(jsonContent);
+    }
 }
 
 /**
