@@ -215,8 +215,17 @@ public class StatisticsService {
         // Average score and analyzed count
         Object[] overallStats = evaluationResultRepository.getOverallStatistics();
         if (overallStats != null && overallStats.length >= 2) {
-            stats.setAverageScore((Double) overallStats[0]);
-            stats.setAnalyzedCount((Long) overallStats[1]);
+            Long totalCount = (Long) overallStats[0];
+            Long analyzedCount = (Long) overallStats[1];
+            stats.setAnalyzedCount(analyzedCount);
+            // Note: Average score is not available from EvaluationResult, 
+            // it should be calculated from EvaluationAnalysis if needed
+        }
+
+        // Get average score from EvaluationAnalysis
+        Object[] analysisStats = evaluationAnalysisRepository.getOverallStatistics();
+        if (analysisStats != null && analysisStats.length >= 2) {
+            stats.setAverageScore((Double) analysisStats[1]); // Average score from analysis
         }
 
         return stats;

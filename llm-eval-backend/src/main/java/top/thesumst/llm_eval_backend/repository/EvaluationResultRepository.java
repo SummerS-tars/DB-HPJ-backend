@@ -185,7 +185,6 @@ public interface EvaluationResultRepository extends JpaRepository<EvaluationResu
     /**
      * Get overall statistics
      */
-    @Query("SELECT AVG(CAST(er.score AS double)), COUNT(er) FROM EvaluationResult er " +
-           "WHERE er.score IS NOT NULL AND er.status = 'ANALYZED'")
+    @Query("SELECT COUNT(er), COUNT(CASE WHEN er.status = 'ANALYZED' THEN 1 END) FROM EvaluationResult er")
     Object[] getOverallStatistics();
 } 
