@@ -14,10 +14,13 @@ import top.thesumst.llm_eval_backend.dto.request.RawAnswerImportRequest;
 import top.thesumst.llm_eval_backend.dto.response.ImportResponse;
 import top.thesumst.llm_eval_backend.dto.response.RawAnswerResponse;
 import top.thesumst.llm_eval_backend.entity.RawAnswer;
+import top.thesumst.llm_eval_backend.entity.RawQuestion;
 import top.thesumst.llm_eval_backend.exception.BusinessException;
 import top.thesumst.llm_eval_backend.exception.ErrorCode;
 import top.thesumst.llm_eval_backend.repository.RawAnswerRepository;
 import top.thesumst.llm_eval_backend.repository.RawQuestionRepository;
+
+import java.util.Optional;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -66,16 +69,19 @@ public class RawAnswerService {
                 try {
                     RawAnswerImportRequest request = parseCsvLine(line, sourcePlatform);
                     
-                    // Validate that raw question exists
-                    if (!rawQuestionRepository.existsById(request.getRawQuestionId())) {
-                        log.warn("Raw question not found: id={}", request.getRawQuestionId());
+                    // Find raw question by postId (not database ID)
+                    Optional<RawQuestion> rawQuestionOpt = rawQuestionRepository.findByPostId(request.getRawQuestionId().intValue());
+                    if (rawQuestionOpt.isEmpty()) {
+                        log.warn("Raw question not found by postId: {}", request.getRawQuestionId());
                         errors.add(ImportResponse.ImportError.builder()
                                 .originalRecord(line)
-                                .error("原始问题不存在，ID: " + request.getRawQuestionId())
+                                .error("原始问题不存在，PostID: " + request.getRawQuestionId())
                                 .build());
                         failedCount++;
                         continue;
                     }
+                    
+                    RawQuestion rawQuestion = rawQuestionOpt.get();
 
                     // Check for duplicate
                     if (request.getPostId() != null && 
@@ -86,6 +92,8 @@ public class RawAnswerService {
                     }
 
                     RawAnswer answer = modelMapper.map(request, RawAnswer.class);
+                    // Set the correct database ID of the raw question
+                    answer.setRawQuestionId(rawQuestion.getId());
                     rawAnswerRepository.save(answer);
                     importedCount++;
                     
@@ -170,7 +178,8 @@ public class RawAnswerService {
 
     /**
      * Parse CSV line to RawAnswerImportRequest
-     * Expected format: rawQuestionId,content,sourcePlatform,postId,score
+     * Expected format: rawQuestionPostId,content,postId,score
+     * Note: The first field is the postId of the raw question (not database ID)
      */
     private RawAnswerImportRequest parseCsvLine(String line, String sourcePlatform) {
         String[] fields = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1); // Handle CSV with quotes
