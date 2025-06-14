@@ -19,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import top.thesumst.llm_eval_backend.dto.request.StatusUpdateRequest;
 import top.thesumst.llm_eval_backend.dto.response.ImportResponse;
 import top.thesumst.llm_eval_backend.dto.response.RawQuestionResponse;
+import top.thesumst.llm_eval_backend.dto.response.SimplePostIdsResponse;
+import top.thesumst.llm_eval_backend.dto.response.StackOverflowPostIdsResponse;
 import top.thesumst.llm_eval_backend.entity.enums.RawQuestionStatus;
 import top.thesumst.llm_eval_backend.service.RawQuestionService;
 
@@ -115,5 +117,66 @@ public class RawQuestionController {
         RawQuestionResponse result = rawQuestionService.updateStatus(id, request.getStatus());
         
         return ResponseEntity.ok(top.thesumst.llm_eval_backend.dto.response.ApiResponse.success(result, "状态更新成功"));
+    }
+
+    @Operation(summary = "获取StackOverflow问题PostId列表", 
+               description = "获取所有来自StackOverflow且没有答案的原始问题的PostId列表")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "查询成功",
+                content = @Content(schema = @Schema(implementation = StackOverflowPostIdsResponse.class))),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @GetMapping("/stackoverflow/post-ids-without-answers")
+    public ResponseEntity<top.thesumst.llm_eval_backend.dto.response.ApiResponse<StackOverflowPostIdsResponse>> getStackOverflowPostIdsWithoutAnswers() {
+        
+        log.info("Getting StackOverflow post IDs without raw answers");
+        
+        StackOverflowPostIdsResponse result = rawQuestionService.getStackOverflowPostIdsWithoutAnswers();
+        
+        return ResponseEntity.ok(top.thesumst.llm_eval_backend.dto.response.ApiResponse.success(result, 
+                "成功获取StackOverflow问题PostId列表（" + result.getTotalCount() + "个）"));
+    }
+
+    @Operation(summary = "下载StackOverflow问题PostId文件", 
+               description = "下载包含所有StackOverflow无答案问题PostId的JSON文件")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "下载成功",
+                content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @GetMapping(value = "/stackoverflow/post-ids-without-answers/download", 
+                produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<StackOverflowPostIdsResponse> downloadStackOverflowPostIdsWithoutAnswers() {
+        
+        log.info("Downloading StackOverflow post IDs without raw answers as JSON file");
+        
+        StackOverflowPostIdsResponse result = rawQuestionService.getStackOverflowPostIdsWithoutAnswers();
+        
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"stackoverflow_raw_questions_postIds.json\"")
+                .header("Content-Type", "application/json; charset=UTF-8")
+                .body(result);
+    }
+
+    @Operation(summary = "获取StackOverflow问题PostId（简化格式）", 
+               description = "获取StackOverflow无答案问题PostId的简化JSON格式，完全匹配请求文档格式")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "下载成功",
+                content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @GetMapping(value = "/stackoverflow/post-ids-simple", 
+                produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SimplePostIdsResponse> getStackOverflowPostIdsSimpleFormat() {
+        
+        log.info("Getting StackOverflow post IDs in simple format (exact match to document spec)");
+        
+        StackOverflowPostIdsResponse fullResponse = rawQuestionService.getStackOverflowPostIdsWithoutAnswers();
+        SimplePostIdsResponse simpleResponse = SimplePostIdsResponse.of(fullResponse.getPostIds());
+        
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"stackoverflow_raw_questions_postIds.json\"")
+                .header("Content-Type", "application/json; charset=UTF-8")
+                .body(simpleResponse);
     }
 } 

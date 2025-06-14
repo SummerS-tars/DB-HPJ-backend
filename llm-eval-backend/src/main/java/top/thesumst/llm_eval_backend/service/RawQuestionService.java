@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import top.thesumst.llm_eval_backend.dto.request.RawQuestionImportRequest;
 import top.thesumst.llm_eval_backend.dto.response.ImportResponse;
 import top.thesumst.llm_eval_backend.dto.response.RawQuestionResponse;
+import top.thesumst.llm_eval_backend.dto.response.StackOverflowPostIdsResponse;
 import top.thesumst.llm_eval_backend.entity.RawQuestion;
 import top.thesumst.llm_eval_backend.entity.enums.RawQuestionStatus;
 import top.thesumst.llm_eval_backend.exception.BusinessException;
@@ -156,6 +157,20 @@ public class RawQuestionService {
         log.info("Updated raw question status: id={}, status={}", id, status);
         
         return modelMapper.map(savedQuestion, RawQuestionResponse.class);
+    }
+
+    /**
+     * Get StackOverflow post IDs without raw answers
+     */
+    public StackOverflowPostIdsResponse getStackOverflowPostIdsWithoutAnswers() {
+        log.info("Getting StackOverflow post IDs without raw answers");
+        
+        List<Integer> postIds = rawQuestionRepository.findStackOverflowPostIdsWithoutAnswers();
+        long totalCount = rawQuestionRepository.countStackOverflowQuestionsWithoutAnswers();
+        
+        log.info("Found {} StackOverflow questions without answers", postIds.size());
+        
+        return StackOverflowPostIdsResponse.of(postIds, totalCount);
     }
 
     /**
