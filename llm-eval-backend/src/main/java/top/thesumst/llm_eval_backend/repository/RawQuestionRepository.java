@@ -81,4 +81,16 @@ public interface RawQuestionRepository extends JpaRepository<RawQuestion, Long> 
            "AND rq.postId IS NOT NULL " +
            "AND NOT EXISTS (SELECT 1 FROM RawAnswer ra WHERE ra.rawQuestionId = rq.id)")
     long countStackOverflowQuestionsWithoutAnswers();
+
+    /**
+     * Get statistics by status
+     */
+    @Query("SELECT rq.status, COUNT(rq) FROM RawQuestion rq GROUP BY rq.status")
+    List<Object[]> getStatusStatistics();
+
+    /**
+     * Get statistics by platform
+     */
+    @Query("SELECT rq.sourcePlatform, COUNT(rq) FROM RawQuestion rq GROUP BY rq.sourcePlatform")
+    List<Object[]> getPlatformStatistics();
 } 

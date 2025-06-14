@@ -119,4 +119,24 @@ public interface StandardQuestionRepository extends JpaRepository<StandardQuesti
     List<StandardQuestion> findQuestionsForExport(@Param("type") QuestionType type,
                                                  @Param("version") String version,
                                                  @Param("tag") String tag);
+
+    /**
+     * Get statistics by type
+     */
+    @Query("SELECT sq.type, COUNT(sq) FROM StandardQuestion sq GROUP BY sq.type")
+    List<Object[]> getTypeStatistics();
+
+    /**
+     * Get statistics by version
+     */
+    @Query("SELECT v.version, COUNT(DISTINCT sq) FROM StandardQuestion sq " +
+           "LEFT JOIN sq.versions v GROUP BY v.version")
+    List<Object[]> getVersionStatistics();
+
+    /**
+     * Count questions with answers
+     */
+    @Query("SELECT COUNT(DISTINCT sq) FROM StandardQuestion sq " +
+           "WHERE EXISTS (SELECT 1 FROM StandardAnswer sa WHERE sa.stdQuestionId = sq.id)")
+    long countQuestionsWithAnswers();
 } 

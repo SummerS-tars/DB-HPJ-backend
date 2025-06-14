@@ -167,4 +167,25 @@ public interface EvaluationResultRepository extends JpaRepository<EvaluationResu
            "GROUP BY er.id " +
            "ORDER BY er.id")
     List<Object[]> findWithAnalysisCount(@Param("evaluationTagId") Long evaluationTagId);
+
+    /**
+     * Get statistics by model
+     */
+    @Query("SELECT et.model, COUNT(er) FROM EvaluationResult er " +
+           "JOIN er.evaluationTag et " +
+           "GROUP BY et.model")
+    List<Object[]> getModelStatistics();
+
+    /**
+     * Get statistics by status
+     */
+    @Query("SELECT er.status, COUNT(er) FROM EvaluationResult er GROUP BY er.status")
+    List<Object[]> getStatusStatistics();
+
+    /**
+     * Get overall statistics
+     */
+    @Query("SELECT AVG(CAST(er.score AS double)), COUNT(er) FROM EvaluationResult er " +
+           "WHERE er.score IS NOT NULL AND er.status = 'ANALYZED'")
+    Object[] getOverallStatistics();
 } 
