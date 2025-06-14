@@ -109,16 +109,15 @@ public class EvaluationResultService {
                 try {
                     EvaluationResultImportRequest request = parseJsonNode(answerNode, evaluationTagId);
                     
-                    // Check for duplicate
-                    if (evaluationResultRepository.existsByEvaluationTagIdAndStdQuestionId(
-                            request.getEvaluationTagId(), request.getStdQuestionId())) {
-                        log.warn("Duplicate evaluation result found: tagId={}, questionId={}", 
-                                request.getEvaluationTagId(), request.getStdQuestionId());
+                    // Check for duplicate based on question type
+                    if (shouldRejectDuplicate(request)) {
+                        log.warn("Duplicate evaluation result rejected: tagId={}, questionId={}, type={}", 
+                                request.getEvaluationTagId(), request.getStdQuestionId(), request.getType());
                         skippedCount++;
                         errors.add(ImportResponse.ImportError.builder()
                                 .originalRecord(answerNode.toString())
-                                .error("重复记录：评估标签ID " + request.getEvaluationTagId() + 
-                                      " 和问题ID " + request.getStdQuestionId() + " 的组合已存在")
+                                .error("重复记录：" + request.getType() + " 类型问题不允许重复评估 (评估标签ID: " + 
+                                      request.getEvaluationTagId() + ", 问题ID: " + request.getStdQuestionId() + ")")
                                 .build());
                         continue;
                     }
@@ -188,16 +187,15 @@ public class EvaluationResultService {
                 try {
                     EvaluationResultImportRequest request = parseCsvLine(line, evaluationTagId);
                     
-                    // Check for duplicate
-                    if (evaluationResultRepository.existsByEvaluationTagIdAndStdQuestionId(
-                            request.getEvaluationTagId(), request.getStdQuestionId())) {
-                        log.warn("Duplicate evaluation result found: tagId={}, questionId={}", 
-                                request.getEvaluationTagId(), request.getStdQuestionId());
+                    // Check for duplicate based on question type
+                    if (shouldRejectDuplicate(request)) {
+                        log.warn("Duplicate evaluation result rejected: tagId={}, questionId={}, type={}", 
+                                request.getEvaluationTagId(), request.getStdQuestionId(), request.getType());
                         skippedCount++;
                         errors.add(ImportResponse.ImportError.builder()
                                 .originalRecord(line)
-                                .error("重复记录：评估标签ID " + request.getEvaluationTagId() + 
-                                      " 和问题ID " + request.getStdQuestionId() + " 的组合已存在")
+                                .error("重复记录：" + request.getType() + " 类型问题不允许重复评估 (评估标签ID: " + 
+                                      request.getEvaluationTagId() + ", 问题ID: " + request.getStdQuestionId() + ")")
                                 .build());
                         continue;
                     }
@@ -314,15 +312,14 @@ public class EvaluationResultService {
                     throw new IllegalArgumentException("标准问题不存在，ID: " + request.getStdQuestionId());
                 }
 
-                // Check for duplicate
-                if (evaluationResultRepository.existsByEvaluationTagIdAndStdQuestionId(
-                        request.getEvaluationTagId(), request.getStdQuestionId())) {
-                    log.warn("Duplicate evaluation result found: tagId={}, questionId={}", 
-                            request.getEvaluationTagId(), request.getStdQuestionId());
+                // Check for duplicate based on question type
+                if (shouldRejectDuplicate(request)) {
+                    log.warn("Duplicate evaluation result rejected: tagId={}, questionId={}, type={}", 
+                            request.getEvaluationTagId(), request.getStdQuestionId(), request.getType());
                     errors.add(ImportResponse.ImportError.builder()
                             .originalRecord(request.toString())
-                            .error("重复记录：评估标签ID " + request.getEvaluationTagId() + 
-                                  " 和问题ID " + request.getStdQuestionId() + " 的组合已存在")
+                            .error("重复记录：" + request.getType() + " 类型问题不允许重复评估 (评估标签ID: " + 
+                                  request.getEvaluationTagId() + ", 问题ID: " + request.getStdQuestionId() + ")")
                             .build());
                     failedCount++;
                     continue;
@@ -539,5 +536,39 @@ public class EvaluationResultService {
     private String cleanCsvField(String field) {
         if (field == null) return "";
         return field.trim().replaceAll("^\"|\"$", "");
+    }
+
+    /**
+     * Check if duplicate should be rejected based on question type
+     * - OBJECTIVE questions: Only one evaluation result allowed per question per evaluation tag
+     * - SUBJECTIVE questions: Multiple evaluation results allowed per question per evaluation tag
+     */
+    private boolean shouldRejectDuplicate(EvaluationResultImportRequest request) {
+        // Check if any evaluation result exists for this tag and question
+        boolean duplicateExists = evaluationResultRepository.existsByEvaluationTagIdAndStdQuestionId(
+                request.getEvaluationTagId(), request.getStdQuestionId());
+        
+        if (!duplicateExists) {
+            return false; // No duplicate, allow import
+        }
+        
+        // For OBJECTIVE questions, reject duplicates
+        if (request.getType() == QuestionType.OBJECTIVE) {
+            log.info("Rejecting duplicate OBJECTIVE question: tagId={}, questionId={}", 
+                    request.getEvaluationTagId(), request.getStdQuestionId());
+            return true;
+        }
+        
+        // For SUBJECTIVE questions, allow duplicates
+        if (request.getType() == QuestionType.SUBJECTIVE) {
+            log.info("Allowing duplicate SUBJECTIVE question: tagId={}, questionId={}", 
+                    request.getEvaluationTagId(), request.getStdQuestionId());
+            return false;
+        }
+        
+        // Default: reject duplicates for unknown types
+        log.warn("Unknown question type {}, rejecting duplicate: tagId={}, questionId={}", 
+                request.getType(), request.getEvaluationTagId(), request.getStdQuestionId());
+        return true;
     }
 } 
