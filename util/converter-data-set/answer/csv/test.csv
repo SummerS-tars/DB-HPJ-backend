@@ -1,0 +1,5 @@
+rawQuestionId,content,postId,score
+"32027","It is worth noting that a lot of tools like Nant run on mono 'out of the box', i.e. mono nant.exe works","46075","1"
+"88","Wine is actually using gettimeofday() to implement QueryPerformanceCounter() and it is known to make many Windows games work on Linux and Mac. Starts http://source.winehq.org/source/dlls/kernel32/cpu.c#L312 leads to http://source.winehq.org/source/dlls/ntdll/time.c#L448","1290","11"
+"32027","@Rob G - Hey! That's my post! ;) For some other good examples, be sure to browse the NUnit source code. I work closely with Charlie whenever I can to make sure it is building and testing on Mono. He tries to run whenever he can as well.","46099","2"
+"27266","Your ISP is probably more likely to traffic shape port 443 over 22, seeing as 22 requires more real-time responsiveness. Not really a programming question though, maybe you'll get a more accurate response somewhere else..","27274","2"
