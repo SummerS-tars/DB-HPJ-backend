@@ -1,7 +1,0 @@
-  <row Id="68203188" PostTypeId="2" ParentId="67987244" CreationDate="2021-07-01T01:18:23.933" Score="3" Body="&lt;p&gt;I have something similar and is caused by nodemon. Had to revert to nodemon v1.19.4&lt;/p&gt;&#10;" OwnerUserId="4352368" LastActivityDate="2021-07-01T01:18:23.933" CommentCount="3" ContentLicense="CC BY-SA 4.0" />
-
-  <row Id="69995208" PostTypeId="2" ParentId="67987244" CreationDate="2021-11-16T19:45:30.310" Score="0" Body="&lt;p&gt;I got this problem when using a GitHub Action task to deploy a Vue application in an Azure Static Web App.&lt;/p&gt;&#10;&lt;p&gt;Running &lt;code&gt;npm audit fix&lt;/code&gt; and pushing the changed &lt;code&gt;package-lock.json&lt;/code&gt; solved for me.&lt;/p&gt;&#10;" OwnerUserId="1851755" LastActivityDate="2021-11-16T19:45:30.310" CommentCount="0" ContentLicense="CC BY-SA 4.0" />
-
-  <row Id="71884719" PostTypeId="2" ParentId="67987244" CreationDate="2022-04-15T13:34:26.027" Score="-1" Body="&lt;p&gt;You have to remove package.lock.json and than use npm i&lt;/p&gt;&#10;" OwnerUserId="16162963" LastActivityDate="2022-04-15T13:34:26.027" CommentCount="0" ContentLicense="CC BY-SA 4.0" />
-  
-  <row Id="78064151" PostTypeId="2" ParentId="67987244" CreationDate="2024-02-26T22:05:30.340" Score="0" Body="&lt;p&gt;Remove Package.lock.json and run npm install&lt;/p&gt;&#10;" OwnerUserId="14356867" LastActivityDate="2024-02-26T22:05:30.340" CommentCount="0" ContentLicense="CC BY-SA 4.0" />
