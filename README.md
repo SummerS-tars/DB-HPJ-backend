@@ -270,7 +270,7 @@ llm-eval-backend/
 详细的 API 文档请参考：
 - [API 文档主文档](documents/api/api.md)
 - [API 简易参考](documents/api/api_simple_reference.md)
-- [前端 API 文档](documents/api/supplement/PHASE7_FRONTEND_API_DOCUMENTATION_UPDATED.md)
+- [Phase 7 前端集成 API 文档](documents/api/supplement/PHASE7_FRONTEND_API_DOCUMENTATION_UPDATED.md)
 
 ## ⚙️ 配置说明
 
