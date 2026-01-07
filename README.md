@@ -5,7 +5,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-blue.svg)](https://www.mysql.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-一个基于 Spring Boot 3.x 的大语言模型（LLM）评估数据集管理系统后端服务，专注于管理和处理 LLM 评测所需的问答数据集。
+一个基于 Spring Boot 3.x 的大语言模型（LLM）评估数据集管理系统后端服务，专注于管理和处理 LLM 评估所需的问答数据集。
 
 ## 📋 目录
 
@@ -24,14 +24,14 @@
 
 ## 🎯 项目简介
 
-LLM评估数据集管理系统是一个专门用于管理、处理和评估大语言模型测试数据的后端服务。系统支持从多个来源（如 Stack Overflow）导入原始问答数据，进行标准化处理，生成评测数据集，并记录和分析 LLM 的评测结果。
+LLM评估数据集管理系统是一个专门用于管理、处理和评估大语言模型测试数据的后端服务。系统支持从多个来源（如 Stack Overflow）导入原始问答数据，进行标准化处理，生成评估数据集，并记录和分析 LLM 的评估结果。
 
 ### 主要应用场景
 
 - 🔄 **数据导入与管理**：支持从 Stack Overflow 等平台批量导入原始问答数据
-- 📊 **数据标准化**：将原始数据转换为标准化的评测问题和答案
+- 📊 **数据标准化**：将原始数据转换为标准化的评估问题和答案
 - 🏷️ **标签和版本管理**：支持多标签分类和多版本数据集管理
-- 🤖 **评测结果记录**：记录和管理不同 LLM 模型的评测结果
+- 🤖 **评估结果记录**：记录和管理不同 LLM 模型的评估结果
 - 📈 **统计分析**：提供详细的数据统计和分析功能
 
 ## ✨ 核心功能
@@ -43,7 +43,7 @@ LLM评估数据集管理系统是一个专门用于管理、处理和评估大�
 - ✅ 支持 Stack Overflow 数据格式
 
 ### 2. 标准问题管理
-- ✅ 创建和编辑标准化评测问题
+- ✅ 创建和编辑标准化评估问题
 - ✅ 关联原始问题到标准问题
 - ✅ 多标签分类支持
 - ✅ 问题难度和类型标记
@@ -59,16 +59,16 @@ LLM评估数据集管理系统是一个专门用于管理、处理和评估大�
 - ✅ 为版本添加标准问题
 - ✅ 版本统计和导出功能
 
-### 5. 评测结果管理
+### 5. 评估结果管理
 - ✅ LLM 模型注册和管理
-- ✅ 评测结果记录和查询
-- ✅ 评测批次管理
+- ✅ 评估结果记录和查询
+- ✅ 评估批次管理
 - ✅ 结果分析和统计
 
 ### 6. 统计与分析
 - ✅ 全局数据统计
 - ✅ 分类和标签统计
-- ✅ 评测结果分析
+- ✅ 评估结果分析
 - ✅ 数据导出功能
 
 ## 🛠️ 技术栈
@@ -174,9 +174,9 @@ llm-eval-backend/
 │   │   │   │   ├── CandidateAnswerController.java  # 候选答案 API
 │   │   │   │   ├── VersionController.java          # 版本管理 API
 │   │   │   │   ├── TagController.java              # 标签管理 API
-│   │   │   │   ├── EvaluationTagController.java    # 评测标签 API
-│   │   │   │   ├── EvaluationResultController.java # 评测结果 API
-│   │   │   │   ├── EvaluationAnalysisController.java # 评测分析 API
+│   │   │   │   ├── EvaluationTagController.java    # 评估标签 API
+│   │   │   │   ├── EvaluationResultController.java # 评估结果 API
+│   │   │   │   ├── EvaluationAnalysisController.java # 评估分析 API
 │   │   │   │   ├── AnalysisTagController.java      # 分析标签 API
 │   │   │   │   └── StatisticsController.java       # 统计 API
 │   │   │   ├── dto/                               # 数据传输对象
@@ -190,9 +190,9 @@ llm-eval-backend/
 │   │   │   │   ├── CandidateAnswer.java          # 候选答案实体
 │   │   │   │   ├── Version.java                  # 版本实体
 │   │   │   │   ├── Tag.java                      # 标签实体
-│   │   │   │   ├── EvaluationTag.java            # 评测标签实体
-│   │   │   │   ├── EvaluationResult.java         # 评测结果实体
-│   │   │   │   ├── EvaluationAnalysis.java       # 评测分析实体
+│   │   │   │   ├── EvaluationTag.java            # 评估标签实体
+│   │   │   │   ├── EvaluationResult.java         # 评估结果实体
+│   │   │   │   ├── EvaluationAnalysis.java       # 评估分析实体
 │   │   │   │   ├── AnalysisTag.java              # 分析标签实体
 │   │   │   │   └── enums/                        # 枚举类
 │   │   │   ├── repository/                        # 数据访问层
@@ -253,10 +253,10 @@ llm-eval-backend/
 - `GET /api/v1/versions` - 查询版本列表
 - `POST /api/v1/versions/{id}/questions` - 添加问题到版本
 
-#### 评测管理
-- `POST /api/v1/evaluation-tags` - 注册评测模型
-- `POST /api/v1/evaluation-results/import` - 导入评测结果
-- `GET /api/v1/evaluation-results` - 查询评测结果
+#### 评估管理
+- `POST /api/v1/evaluation-tags` - 注册评估模型
+- `POST /api/v1/evaluation-results/import` - 导入评估结果
+- `GET /api/v1/evaluation-results` - 查询评估结果
 
 #### 统计信息
 - `GET /api/v1/statistics/overall` - 获取全局统计
